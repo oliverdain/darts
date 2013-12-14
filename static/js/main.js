@@ -26,5 +26,6 @@ var checkOnline = function() {
 };
 
 $(document).ready(function() {
-  setInterval(checkOnline, 1000);
+  $('#online-status').text('Online!');
+  setInterval(checkOnline, 10000);
 });
