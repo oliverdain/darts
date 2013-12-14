@@ -1,0 +1,9 @@
+CACHE MANIFEST
+# Version 2
+
+CACHE:
+js/main.js
+js/third_party/jquery-1.9.1.min.js
+
+NETWORK:
+ping
