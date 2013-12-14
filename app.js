@@ -12,7 +12,12 @@ app.set('views', __dirname + '/views');
 
 app.use(express.favicon());
 app.use(express.logger('dev'));
-app.use(express.bodyParser());
+// bodyParser isn't compatible with express-pouchdb, but the following 2 deps
+// provide equivalent functionality (as per the express-couchdb README.md).
+app.use(express.urlencoded());
+app.use(express.multipart());
+
+app.use('/db', require('express-pouchdb'));
 
 // development only
 if ('development' == app.get('env')) {
@@ -22,7 +27,6 @@ if ('development' == app.get('env')) {
 }
 
 var STATIC_PATH = path.join(__dirname, '/static');
-app.use(require('less-middleware')({ src: '/css' }));
 app.use(express.static(STATIC_PATH));
 app.use(app.router);
 

@@ -1,9 +1,12 @@
 CACHE MANIFEST
-# Version 3
+# Version 9
 
 CACHE:
 js/main.js
 js/third_party/jquery-1.9.1.min.js
+js/third_party/pouchdb-nightly.min.js
+
+img/add_user.png
 
 NETWORK:
-ping
+*
