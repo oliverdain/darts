@@ -30,10 +30,6 @@ var STATIC_PATH = path.join(__dirname, '/static');
 app.use(express.static(STATIC_PATH));
 app.use(app.router);
 
-http.createServer(app).listen(app.get('port'), function(){
-  console.log('Express server listening on port ' + app.get('port'));
-});
-
 app.get('/', function(req, res) {
   res.render('main');
 });
@@ -52,4 +48,8 @@ app.get('/manifest', function(req, res) {
       console.log('Mainfest file sent.');
     }
   });
+});
+
+http.createServer(app).listen(app.get('port'), function(){
+  console.log('Express server listening on port ' + app.get('port'));
 });
