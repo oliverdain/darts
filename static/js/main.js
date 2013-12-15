@@ -3,7 +3,29 @@ var db = new PouchDB('darts');
 db.replicate.to('http://localhost:3000/db/darts', {continuous: true});
 db.replicate.from('http://localhost:3000/db/darts', {continuous: true});
 
+
 var setupAddUser = function() {
+  var $form = $('<div/>', {class: 'hidden'});
+  var $name = $('<input/>', {type: 'text'});
+  var $submit = $('<input/>', {type: 'submit', value: 'Submit'});
+  var $cancel = $('<input/>', {type: 'button', value: 'Cancel'});
+
+  $form.append($name, '<br>', $submit, $cancel);
+  var $addBtn = $('#add-user-link');
+  $addBtn.after($form);
+
+  $addBtn.on('click', function() {
+    console.log('Add user clicked');
+    $form.removeClass('hidden');
+  });
+
+  $cancel.on('click', function() {
+    $form.addClass('hidden');
+  });
+
+  $submit.on('click', function() {
+    console.log('Will insert %s into the database', $name.val());
+  });
 
 };
 
