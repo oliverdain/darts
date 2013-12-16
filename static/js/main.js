@@ -1,7 +1,7 @@
 // Database
 var db = new PouchDB('darts');
-db.replicate.to('http://localhost:3000/db/darts', {continuous: true});
-db.replicate.from('http://localhost:3000/db/darts', {continuous: true});
+db.replicate.to('http://localhost:5984/darts', {continuous: true});
+db.replicate.from('http://localhost:5984/darts', {continuous: true});
 
 var MAX_DOC_ID = '9999-99-99T99:99:99';
 
@@ -23,7 +23,42 @@ var docIdForNow = function() {
   return iso.replace(/\.\d{3}Z/, '');
 };
 
-var setupAddUser = function() {
+var RankingsTable = function() {
+  var $table = $('#rankings');
+  var $head = $('<thead><tr><th>Rankings</th></tr></thead>');
+
+  var buildTable = function(ranking) {
+    var $newTable = $('<table/>', {id: 'rankings'});
+    $newTable.append($head);
+    for (var i = 0; i < ranking.length; ++i) {
+      $td = $('<td/>');
+      $td.text(ranking[i]);
+      $tr = $('<tr/>');
+      $tr.append($td);
+      $newTable.append($tr);
+    }
+    $table.replaceWith($newTable);
+    $table = $newTable;
+  };
+
+  var updateFromLatestDoc = function() {
+    getLatestDoc(function(err, doc) {
+      if (err) {
+        console.error('Unable to fetch latest document to build table');
+      } else {
+        buildTable(doc.ranking);
+      }
+    });
+  };
+
+  updateFromLatestDoc();
+
+  return {
+    showRankings: buildTable
+  };
+};
+
+var setupAddUser = function(rankingsTable) {
   var $form = $('<div/>', {class: 'hidden'});
   var $name = $('<input/>', {type: 'text'});
   var $submit = $('<input/>', {type: 'submit', value: 'Submit'});
@@ -42,7 +77,6 @@ var setupAddUser = function() {
   });
 
   $submit.on('click', function() {
-    console.log('Will insert %s: %s into the database', docIdForNow(), $name.val());
     getLatestDoc(function(err, doc) {
       if (err) {
         console.error('Error getting latest doc:', err);
@@ -57,12 +91,12 @@ var setupAddUser = function() {
             console.error('Error adding user!');
           } else {
             $form.addClass('hidden');
+            rankingsTable.showRankings(newDoc.ranking);
           }
         });
       }
     });
   });
-
 };
 
 // Online tracking - single funciton which sets up and runs the online tracking
@@ -101,5 +135,6 @@ var onlineTracking = function() {
 
 $(document).ready(function() {
   onlineTracking();
-  setupAddUser();
+  var rTable = RankingsTable();
+  setupAddUser(rTable);
 });
