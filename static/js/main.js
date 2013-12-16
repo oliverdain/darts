@@ -227,9 +227,19 @@ var onlineTracking = function() {
 
 var rTable;
 $(document).ready(function() {
-  db = new PouchDB('darts');
   var dbUrl = $('#db-url').val();
   console.log('Will replicate to %s', dbUrl);
+  var m = dbUrl.match(/http:\/\/([^;]+):([^@]+)@(.*)/);
+  if (m) {
+    db = new PouchDB('darts', {
+      auth: {username: m[1], password: m[2]}
+    });
+    console.log('Set uname = %s, pass = %s', m[1], m[2]);
+    dbUrl = 'http://' + m[3];
+  } else {
+    db = new PouchDB('darts');
+  }
+
   db.replicate.to(dbUrl, {continuous: true});
   db.replicate.from(dbUrl, {continuous: true});
 
