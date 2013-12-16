@@ -17,7 +17,35 @@ app.use(express.logger('dev'));
 app.use(express.urlencoded());
 app.use(express.multipart());
 
-app.use('/db', require('express-pouchdb'));
+var ePouch = require('express-pouchdb');
+app.use('/db', ePouch);
+
+// Set up an initial database if necessary.
+var PouchDB = ePouch.Pouch;
+var db = new PouchDB('darts');
+// Keys are YYYY-MM-DD-HH:MM:SS so to create an initial state document we create
+// it with year, month, etc. as 0
+var START_DOC_ID = '0000-00-00T00:00:00';
+db.get(START_DOC_ID, function(err, doc) {
+  if (err) {
+    if (err.status == 404) {
+      db.put({
+        _id: START_DOC_ID,
+        ranking: []
+      }, function(err, response) {
+        if (err) {
+          console.error('Error creating initial document:', err);
+          process.exit(1);
+        } else {
+          console.log('Creating initial document in database:', response);
+        }
+      });
+    } else {
+      console.error('Error checking for starting doc:', err);
+      process.exit(1);
+    }
+  }
+});
 
 // development only
 if ('development' == app.get('env')) {

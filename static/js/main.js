@@ -3,6 +3,25 @@ var db = new PouchDB('darts');
 db.replicate.to('http://localhost:3000/db/darts', {continuous: true});
 db.replicate.from('http://localhost:3000/db/darts', {continuous: true});
 
+var MAX_DOC_ID = '9999-99-99T99:99:99';
+
+var getLatestDoc = function(cb) {
+  db.allDocs({include_docs: true, endkey: MAX_DOC_ID,
+    descending: true, limit: 1}, function(err, res) {
+      if (err) {
+        cb(err, null);
+      } else {
+        console.assert(res.rows.length == 1);
+        cb(null, res.rows[0].doc);
+      }
+    });
+}
+
+var docIdForNow = function() {
+  d = new Date();
+  var iso = d.toISOString();
+  return iso.replace(/\.\d{3}Z/, '');
+};
 
 var setupAddUser = function() {
   var $form = $('<div/>', {class: 'hidden'});
@@ -15,7 +34,6 @@ var setupAddUser = function() {
   $addBtn.after($form);
 
   $addBtn.on('click', function() {
-    console.log('Add user clicked');
     $form.removeClass('hidden');
   });
 
@@ -24,7 +42,25 @@ var setupAddUser = function() {
   });
 
   $submit.on('click', function() {
-    console.log('Will insert %s into the database', $name.val());
+    console.log('Will insert %s: %s into the database', docIdForNow(), $name.val());
+    getLatestDoc(function(err, doc) {
+      if (err) {
+        console.error('Error getting latest doc:', err);
+      } else {
+        var newDoc = {_id: docIdForNow(),
+          'event': {type: 'New User'},
+          ranking: doc.ranking
+        };
+        newDoc.ranking.push($name.val());
+        db.put(newDoc, function(err) {
+          if (err) {
+            console.error('Error adding user!');
+          } else {
+            $form.addClass('hidden');
+          }
+        });
+      }
+    });
   });
 
 };
