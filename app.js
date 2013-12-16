@@ -16,7 +16,8 @@ app.use(express.logger('dev'));
 app.use(express.bodyParser());
 
 // Set up an initial database if necessary.
-var db = new PouchDB('http://localhost:5984/darts');
+var dbHost = process.env.DB || 'http://localhost:5984/darts';
+var db = new PouchDB(dbHost);
 // Keys are YYYY-MM-DDTHH:MM:SS so to create an initial state document we create
 // it with year, month, etc. as 0
 var START_DOC_ID = '0000-00-00T00:00:00';
