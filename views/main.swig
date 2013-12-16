@@ -46,8 +46,14 @@
          #match {
             position: fixed;
             top: 0;
-            left: 0;
-            right: 0;
+            width: 20em;
+            left: 50%;
+            margin-left: -10em;
+            background-color: #C0C0C0;
+         }
+
+         #match h2 {
+            text-align: center;
          }
       </style>
    </head>
