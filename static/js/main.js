@@ -27,9 +27,95 @@ var docIdForNow = function() {
   return iso.replace(/\.\d{3}Z/, '');
 };
 
+var insertWinner = function(p1, p2, winner) {
+  getLatestDoc(function(err, curDoc) {
+    if (err) {
+      console.error('Uable to get latest document. Match not recorded');
+      return;
+    }
+
+    var ranking = curDoc.ranking.slice(0);
+    var p1i = ranking.indexOf(p1);
+    var p2i = ranking.indexOf(p2);
+    if (p1i < p2i) {
+      if (winner == p2) {
+        var t = ranking[p1i];
+        ranking[p1i] = ranking[p2i];
+        ranking[p2i] = t;
+      }
+    } else {
+      if (winner == p1) {
+        var t = ranking[p1i];
+        ranking[p1i] = ranking[p2i];
+        ranking[p2i] = t;
+      }
+    }
+
+    var newDoc = {
+      _id: docIdForNow(),
+      'event': {
+        type: 'Match',
+        player1: p1,
+        player2: p2,
+        winner: winner
+      },
+      ranking: ranking
+    };
+    db.put(newDoc, function(err) {
+      if (err) {
+        console.error('Error inserting new rankings:', err);
+      } else {
+        console.log('Rankings updated');
+        rTable.updateRankings();
+      }
+    });
+  });
+}
+
 var RankingsTable = function() {
   var $table = $('#rankings');
   var $head = $('<thead><tr><th>Rankings</th></tr></thead>');
+
+  var getMatchOutcome = function(p1, p2) {
+    $matchForm = $('#match');
+    $('#player-1-name').text(p1);
+    $('#player-2-name').text(p2);
+    $submit = $('#submit-match');
+    $submit.off('click');
+    $submit.on('click', function() {
+      console.log('Will store the winner in the database');
+      console.log('The winner is: %s', $('input[name=winner]:checked').val());
+      var winner = $('input[name=winner]:checked').val();
+      if (winner == '1') {
+        insertWinner(p1, p2, p1);
+      } else {
+        console.assert(winner == '2');
+        insertWinner(p1, p2, p2);
+      }
+      $matchForm.addClass('hidden');
+      $('.selected').removeClass('selected');
+    });
+    $cancel = $('#cancel-match');
+    $cancel.off('click');
+    $cancel.on('click', function() {
+      $matchForm.addClass('hidden');
+      $('.selected').removeClass('selected');
+    });
+
+    $matchForm.removeClass('hidden');
+  };
+
+  var onRowClick = function() {
+    var $row = $(this);
+    $row.toggleClass('selected');
+    $selectedRows = $('.selected');
+    if ($selectedRows.length > 1) {
+      console.assert($selectedRows.length == 2);
+      var p1 = $($selectedRows[0]).text();
+      var p2 = $($selectedRows[1]).text();
+      getMatchOutcome(p1, p2);
+    }
+  }
 
   var buildTable = function(ranking) {
     var $newTable = $('<table/>', {id: 'rankings'});
@@ -38,6 +124,7 @@ var RankingsTable = function() {
       $td = $('<td/>');
       $td.text(ranking[i]);
       $tr = $('<tr/>');
+      $tr.click(onRowClick);
       $tr.append($td);
       $newTable.append($tr);
     }
@@ -60,7 +147,8 @@ var RankingsTable = function() {
   updateFromLatestDoc();
 
   return {
-    showRankings: buildTable
+    showRankings: buildTable,
+    updateRankings: updateFromLatestDoc
   };
 };
 
@@ -139,8 +227,9 @@ var onlineTracking = function() {
   setInterval(checkOnline, 10000);
 };
 
+var rTable;
 $(document).ready(function() {
   onlineTracking();
-  var rTable = RankingsTable();
+  rTable = RankingsTable();
   setupAddUser(rTable);
 });
