@@ -11,8 +11,12 @@ var getLatestDoc = function(cb) {
       if (err) {
         cb(err, null);
       } else {
-        console.assert(res.rows.length == 1);
-        cb(null, res.rows[0].doc);
+        if (res.rows.length === 0) {
+          return null;
+        } else {
+          console.assert(res.rows.length == 1);
+          cb(null, res.rows[0].doc);
+        }
       }
     });
 }
@@ -46,7 +50,9 @@ var RankingsTable = function() {
       if (err) {
         console.error('Unable to fetch latest document to build table');
       } else {
-        buildTable(doc.ranking);
+        if (doc) {
+          buildTable(doc.ranking);
+        }
       }
     });
   };
@@ -82,7 +88,7 @@ var setupAddUser = function(rankingsTable) {
         console.error('Error getting latest doc:', err);
       } else {
         var newDoc = {_id: docIdForNow(),
-          'event': {type: 'New User'},
+          'event': {type: 'New Player', player: $name.val()},
           ranking: doc.ranking
         };
         newDoc.ranking.push($name.val());
