@@ -1,0 +1,5 @@
+* Changes from the central DB sync to the client, but the client doesn't subscribe to the _changes feed so the UI won't update. UI should update when the data does. (note: a refresh fixes it currently)
+
+* Add ability to step through match history
+
+* Some tests to be sure things are working!
