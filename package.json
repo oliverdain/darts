@@ -6,11 +6,11 @@
     "start": "node app.js"
   },
   "dependencies": {
-    "express": "3.3.5",
+    "express": "*",
     "swig": "*",
     "less-middleware": "*",
     "underscore": "*",
     "async": "*",
-    "express-pouchdb": "0.1.1"
+    "pouchdb": "*"
   }
 }

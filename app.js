@@ -2,6 +2,7 @@ var express = require('express');
 var http = require('http');
 var path = require('path');
 var swig = require('swig');
+var PouchDB = require('pouchdb');
 
 var app = express();
 app.engine('swig', swig.renderFile);
@@ -12,18 +13,11 @@ app.set('views', __dirname + '/views');
 
 app.use(express.favicon());
 app.use(express.logger('dev'));
-// bodyParser isn't compatible with express-pouchdb, but the following 2 deps
-// provide equivalent functionality (as per the express-couchdb README.md).
-app.use(express.urlencoded());
-app.use(express.multipart());
-
-var ePouch = require('express-pouchdb');
-app.use('/db', ePouch);
+app.use(express.bodyParser());
 
 // Set up an initial database if necessary.
-var PouchDB = ePouch.Pouch;
-var db = new PouchDB('darts');
-// Keys are YYYY-MM-DD-HH:MM:SS so to create an initial state document we create
+var db = new PouchDB('http://localhost:5984/darts');
+// Keys are YYYY-MM-DDTHH:MM:SS so to create an initial state document we create
 // it with year, month, etc. as 0
 var START_DOC_ID = '0000-00-00T00:00:00';
 db.get(START_DOC_ID, function(err, doc) {
