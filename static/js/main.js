@@ -1,7 +1,5 @@
 // Database
-var db = new PouchDB('darts');
-db.replicate.to('http://localhost:5984/darts', {continuous: true});
-db.replicate.from('http://localhost:5984/darts', {continuous: true});
+var db;
 
 var MAX_DOC_ID = '9999-99-99T99:99:99';
 
@@ -229,6 +227,12 @@ var onlineTracking = function() {
 
 var rTable;
 $(document).ready(function() {
+  db = new PouchDB('darts');
+  var dbUrl = $('#db-url').val();
+  console.log('Will replicate to %s', dbUrl);
+  db.replicate.to(dbUrl, {continuous: true});
+  db.replicate.from(dbUrl, {continuous: true});
+
   onlineTracking();
   rTable = RankingsTable();
   setupAddUser(rTable);

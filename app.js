@@ -17,9 +17,10 @@ app.use(express.bodyParser());
 
 // Set up an initial database if necessary.
 var dbHost = process.env.DB || 'http://localhost:5984/darts';
+console.info('Connecting to database at: %s', dbHost);
 var db = new PouchDB(dbHost);
-// Keys are YYYY-MM-DDTHH:MM:SS so to create an initial state document we create
-// it with year, month, etc. as 0
+// Keys are YYYY-MM-DDTHH:MM:SS so to create an initial state document we
+// create it with year, month, etc. as 0
 var START_DOC_ID = '0000-00-00T00:00:00';
 db.get(START_DOC_ID, function(err, doc) {
   if (err) {
@@ -150,7 +151,7 @@ app.use(express.static(STATIC_PATH));
 app.use(app.router);
 
 app.get('/', function(req, res) {
-  res.render('main');
+  res.render('main', {dbUrl: dbHost});
 });
 
 app.get('/ping', function(req, res) {

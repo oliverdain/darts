@@ -64,6 +64,8 @@
 
       <img id="add-user-link" src="img/add_user.png">
 
+      <input type="hidden" id="db-url" value="{{ dbUrl }}">
+
       <div id="online-status">
       </div>
       <div id="match" class="hidden">
