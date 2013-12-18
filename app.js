@@ -192,7 +192,7 @@ app.get('/ping', function(req, res) {
 
 app.get('/manifest', function(req, res) {
   res.header("Content-Type", "text/cache-manifest");
-  res.sendfile('manifest/manifest', function(err) {
+  res.sendfile(__dirname + '/manifest/manifest', function(err) {
     if (err) {
       console.error('Error sending manifest:', err);
     } else {
