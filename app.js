@@ -3,6 +3,7 @@ var http = require('http');
 var path = require('path');
 var swig = require('swig');
 var PouchDB = require('pouchdb');
+var request = require('request');
 
 var app = express();
 app.engine('swig', swig.renderFile);
@@ -10,6 +11,22 @@ app.engine('swig', swig.renderFile);
 app.set('port', process.env.PORT || 3000);
 app.set('view engine', 'swig');
 app.set('views', __dirname + '/views');
+
+var DATABASE_URL = 'http://localhost:5984';
+// Have to do this before bodyparser or it messes things up.
+// This proxies anything to /darts directly to the couchdb darts database.
+app.use(function(req, res, next) {
+  var proxyPath = req.originalUrl.match(/(^\/darts.*)$/);
+  if(proxyPath){
+    var dbUrl = DATABASE_URL + proxyPath[1];
+    req.pipe(request({
+      uri: dbUrl,
+      method: req.method
+    })).pipe(res);
+  } else {
+    next();
+  }
+});
 
 app.use(express.favicon());
 app.use(express.logger('dev'));

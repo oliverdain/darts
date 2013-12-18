@@ -9,8 +9,7 @@
     "express": "*",
     "swig": "*",
     "less-middleware": "*",
-    "underscore": "*",
-    "async": "*",
-    "pouchdb": "*"
+    "pouchdb": "*",
+    "request": "*"
   }
 }

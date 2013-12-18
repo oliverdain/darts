@@ -1,5 +1,5 @@
 // Database
-var db;
+var db = new PouchDB('darts');
 
 var MAX_DOC_ID = '9999-99-99T99:99:99';
 
@@ -227,19 +227,10 @@ var onlineTracking = function() {
 
 var rTable;
 $(document).ready(function() {
-  var dbUrl = $('#db-url').val();
-  console.log('Will replicate to %s', dbUrl);
-  var m = dbUrl.match(/http:\/\/([^;]+):([^@]+)@(.*)/);
-  if (m) {
-    db = new PouchDB('darts', {
-      auth: {username: m[1], password: m[2]}
-    });
-    console.log('Set uname = %s, pass = %s', m[1], m[2]);
-    dbUrl = 'http://' + m[3];
-  } else {
-    db = new PouchDB('darts');
-  }
-
+  var dbUrl = location.protocol + '//' +
+    location.hostname + ':' + location.port + '/darts';
+  // var dbUrl = 'http://localhost:5984/darts';
+  console.info('Will replicate to %s', dbUrl);
   db.replicate.to(dbUrl, {continuous: true});
   db.replicate.from(dbUrl, {continuous: true});
 
