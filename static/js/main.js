@@ -73,6 +73,8 @@ var insertWinner = function(p1, p2, winner) {
 var RankingsTable = function() {
   var $table = $('#rankings');
   var $head = $('<thead><tr><th>Rankings</th></tr></thead>');
+  // The id of the doc whose results are currently displayed
+  var currentDoc = null;
 
   var getMatchOutcome = function(p1, p2) {
     $matchForm = $('#match');
@@ -137,12 +139,29 @@ var RankingsTable = function() {
       } else {
         if (doc) {
           buildTable(doc.ranking);
+          currentDoc = doc._id;
         }
       }
     });
   };
 
+  // Called when a changed document is detected.
+  var updateOnChanges = function(change) {
+    var doc = change.doc;
+    if (!currentDoc || doc._id >= currentDoc) {
+      currentDoc = doc._id;
+      console.log('Updating table with %s', doc._id);
+      buildTable(doc.ranking);
+    }
+  };
+
   updateFromLatestDoc();
+
+  db.changes({
+    include_docs: true,
+    continuous: true,
+    onChange: updateOnChanges
+  });
 
   return {
     showRankings: buildTable,

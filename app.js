@@ -151,7 +151,8 @@ var resolveChanges = function(change) {
               console.info('Change consistent.');
               break;
             } else {
-              console.info('Change requires update. Computed ranking: %j. Old ranking: %j',
+              console.info('Change requires update. ' +
+                  'Computed ranking: %j. Old ranking: %j',
                   newRanking, nextDoc.ranking);
               nextDoc.ranking = newRanking;
               updates.push(nextDoc);
