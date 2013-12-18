@@ -227,9 +227,11 @@ var onlineTracking = function() {
 
 var rTable;
 $(document).ready(function() {
-  var dbUrl = location.protocol + '//' +
-    location.hostname + ':' + location.port + '/darts';
-  // var dbUrl = 'http://localhost:5984/darts';
+  var dbUrl = location.protocol + '//' + location.hostname;
+  if (location.port) {
+   dbUrl = dbUrl + ':' + location.port;
+  }
+  dbUrl = dbUrl + '/darts';
   console.info('Will replicate to %s', dbUrl);
   db.replicate.to(dbUrl, {continuous: true});
   db.replicate.from(dbUrl, {continuous: true});
