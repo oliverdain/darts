@@ -12,17 +12,29 @@ app.set('port', process.env.PORT || 3000);
 app.set('view engine', 'swig');
 app.set('views', __dirname + '/views');
 
-var DATABASE_URL = 'http://localhost:5984';
+app.use(express.basicAuth(function(user, pass){
+  return 'darts' == user && 'D4rts' == pass;
+}));
+
+// Proxy all requests to /darts to the local CouchDB instance.
+//
 // Have to do this before bodyparser or it messes things up.
 // This proxies anything to /darts directly to the couchdb darts database.
+var DATABASE_URL = 'http://localhost:5984';
 app.use(function(req, res, next) {
   var proxyPath = req.originalUrl.match(/(^\/darts.*)$/);
   if(proxyPath){
     var dbUrl = DATABASE_URL + proxyPath[1];
-    req.pipe(request({
+    var requestOptions = {
       uri: dbUrl,
-      method: req.method
-    })).pipe(res);
+      method: req.method,
+      headers: req.headers
+    };
+    // Now strip out the auth headers or couch will try to use them to
+    // authenticate the user.
+    delete requestOptions.headers.authorization;
+      
+    req.pipe(request(requestOptions)).pipe(res);
   } else {
     next();
   }
@@ -31,6 +43,7 @@ app.use(function(req, res, next) {
 app.use(express.favicon());
 app.use(express.logger('dev'));
 app.use(express.bodyParser());
+
 
 // Set up an initial database if necessary.
 var dbHost = process.env.DB || 'http://localhost:5984/darts';
