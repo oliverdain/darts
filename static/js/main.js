@@ -76,25 +76,32 @@ var RankingsTable = function() {
   // The id of the doc whose results are currently displayed
   var currentDoc = null;
 
+  var afterMatchRecorded = function() {
+    $matchForm.addClass('hidden');
+    $('.selected').removeClass('selected');
+  };
+
   var getMatchOutcome = function(p1, p2) {
     $matchForm = $('#match');
-    $('#player-1-name').text(p1);
-    $('#player-2-name').text(p2);
-    $submit = $('#submit-match');
-    $submit.off('click');
-    $submit.on('click', function() {
-      console.log('Will store the winner in the database');
-      console.log('The winner is: %s', $('input[name=winner]:checked').val());
-      var winner = $('input[name=winner]:checked').val();
-      if (winner == '1') {
-        insertWinner(p1, p2, p1);
-      } else {
-        console.assert(winner == '2');
-        insertWinner(p1, p2, p2);
-      }
-      $matchForm.addClass('hidden');
-      $('.selected').removeClass('selected');
+    $btnP1 = $('#match-p1');
+    $btnP2 = $('#match-p2');
+    $btnP1.val(p1);
+    $btnP2.val(p2);
+
+    $btnP1.off('click');
+    $btnP1.on('click', function() {
+      console.log('Winner is %s', p1);
+      insertWinner(p1, p2, p1);
+      afterMatchRecorded();
     });
+
+    $btnP2.off('click');
+    $btnP2.on('click', function() {
+      console.log('Winner is %s', p2);
+      insertWinner(p1, p2, p2);
+      afterMatchRecorded();
+    });
+
     $cancel = $('#cancel-match');
     $cancel.off('click');
     $cancel.on('click', function() {
