@@ -77,8 +77,8 @@
 
       <input type="hidden" id="db-url" value="{{ dbUrl }}">
 
-      <div id="online-status">
-      </div>
+      {# This gets shown to record the outcome of a match. It's hidden
+         until the user selects two rows in the rankings table. #}
       <div id="match" class="hidden">
          <h2>Select the winner:</h2>
          <input type="button" id="match-p1" class="match-button"><br>

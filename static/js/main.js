@@ -217,38 +217,39 @@ var setupAddUser = function(rankingsTable) {
   });
 };
 
-// Online tracking - single funciton which sets up and runs the online tracking
-// stuff.
-var onlineTracking = function() {
-  var online = true;
+// This does several things:
+//
+// 1) When the manifest is updated the browser loads the new resources, but it
+//    continues to use the old ones so to actually *use* new code after an
+//    update it's necessary to hit reload twice. This detects that we've
+//    downloaded an updated appcache and auto-reloads the page.
+//
+// 2) If we're running offline (we can tell because the last manifest fetch
+//    failed) we schedule periodic re-checks of the manifest so we stay up to
+//    date.
+//
+// 3) We schedule less frequent manifest checks so a page left open still
+//    detects a new manifest.
+var appCacheHandling = function() {
+  var appCache = window.applicationCache;
+  $appCache = $(appCache);
 
-  var onOnline = function() {
-    $('#online-status').text('Online!');
-  };
+  $appCache.on('checking', function() {
+    console.log('Checking for an updated manifest');
+  });
 
-  var onOffline = function() {
-    $('#online-status').text('Offline');
-  };
+  $appCache.on('error', function(e) {
+    console.error('Error updating the applicatin cache: %j', e);
+  });
 
+  $appCache.on('noupdate', function() {
+    console.log('Applicaton cache is up to date. No changes found.');
+  });
 
-  var checkOnline = function() {
-    $.get('/ping', function(data) {
-      if (!online) {
-        console.log('Online as of %s', data);
-        onOnline();
-      }
-      online = true;
-    }).fail(function(err) {
-      if (online) {
-        console.log('No longer online: %s', err);
-        onOffline();
-      }
-      online = false;
-    });
-  };
-
-  $('#online-status').text('Online!');
-  setInterval(checkOnline, 10000);
+  $appCache.on('updateready', function() {
+    console.log('Updated application cache found. Reloading the page.');
+    window.location.reload();
+  });
 };
 
 var rTable;
@@ -262,7 +263,7 @@ $(document).ready(function() {
   db.replicate.to(dbUrl, {continuous: true});
   db.replicate.from(dbUrl, {continuous: true});
 
-  onlineTracking();
+  appCacheHandling();
   rTable = RankingsTable();
   setupAddUser(rTable);
 });
