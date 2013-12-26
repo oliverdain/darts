@@ -230,12 +230,23 @@ var setupAddUser = function(rankingsTable) {
 //
 // 3) We schedule less frequent manifest checks so a page left open still
 //    detects a new manifest.
-var appCacheHandling = function() {
+//
+// 4) Continuous database replication with PouchDB doesn't handle network issues
+//    quite right. If the network is fine, replication is great, but if the
+//    network goes down, replicaton fails. That's not too bad because pouch will
+//    call the "complete" callback (continous replications are only "complete"
+//    when they fail). However, if you restart replication in that callback and
+//    it still fails the complete callback isn't called again. We therefore need
+//    to track when we are and are not connected and manually restart
+//    replication whenever the network link comes back.
+var connectionHandling = function() {
   var appCache = window.applicationCache;
   $appCache = $(appCache);
   var NUM_MILLIS_PER_SEC = 1000;
   var OFFLINE_RECHECK_TIME_MILLIS = 10 * NUM_MILLIS_PER_SEC;
   var ONLINE_RECHECK_TIME_MILLIS = 10 * 60 * NUM_MILLIS_PER_SEC;
+
+  var replicationInProgress = true;
 
   var tryAppCacheUpdate = function() {
     appCache.update();
@@ -255,26 +266,44 @@ var appCacheHandling = function() {
   $appCache.on('noupdate', function() {
     console.log('Applicaton cache is up to date. No changes found.');
     setTimeout(tryAppCacheUpdate, ONLINE_RECHECK_TIME_MILLIS);
+    // Restart the database replication process.
+    if (!replicationInProgress) {
+      startReplication();
+    }
   });
 
   $appCache.on('updateready', function() {
     console.log('Updated application cache found. Reloading the page.');
+    // No more handling here because we'll keep reloading until the noupdate
+    // event fires.
     window.location.reload();
   });
+
+  var replicationError = function() {
+    console.log('Replication failed. Will retry.');
+    replicationInProgress = false;
+    setTimeout(tryAppCacheUpdate, OFFLINE_RECHECK_TIME_MILLIS);
+  };
+
+  var startReplication = function() {
+    var dbUrl = location.protocol + '//' + location.hostname;
+    if (location.port) {
+     dbUrl = dbUrl + ':' + location.port;
+    }
+    dbUrl = dbUrl + '/darts';
+    console.info('Will replicate to %s', dbUrl);
+    db.replicate.to(dbUrl, {continuous: true});
+    // for continuous replication, complete is called only when replication fails.
+    db.replicate.from(dbUrl, {continuous: true, complete: replicationError});
+    replicationInProgress = true;
+  };
+
+  startReplication();
 };
 
 var rTable;
 $(document).ready(function() {
-  var dbUrl = location.protocol + '//' + location.hostname;
-  if (location.port) {
-   dbUrl = dbUrl + ':' + location.port;
-  }
-  dbUrl = dbUrl + '/darts';
-  console.info('Will replicate to %s', dbUrl);
-  db.replicate.to(dbUrl, {continuous: true});
-  db.replicate.from(dbUrl, {continuous: true});
-
-  appCacheHandling();
+  connectionHandling();
   rTable = RankingsTable();
   setupAddUser(rTable);
 });
