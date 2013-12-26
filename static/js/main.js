@@ -235,7 +235,7 @@ var appCacheHandling = function() {
   $appCache = $(appCache);
   var NUM_MILLIS_PER_SEC = 1000;
   var OFFLINE_RECHECK_TIME_MILLIS = 10 * NUM_MILLIS_PER_SEC;
-  var ONLINE_RECHECK_TIME_MILLIS = 10 * NUM_MILLIS_PER_SEC;
+  var ONLINE_RECHECK_TIME_MILLIS = 10 * 60 * NUM_MILLIS_PER_SEC;
 
   var tryAppCacheUpdate = function() {
     appCache.update();
