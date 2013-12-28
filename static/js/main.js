@@ -2,6 +2,7 @@
 var db = new PouchDB('darts');
 
 var MAX_DOC_ID = '9999-99-99T99:99:99';
+var MIN_DOC_ID = '0000-00-00T00:00:00';
 
 var getLatestDoc = function(cb) {
   db.allDocs({include_docs: true, endkey: MAX_DOC_ID,
@@ -21,24 +22,27 @@ var getLatestDoc = function(cb) {
 
 // Return the document that comes before docid
 var getPrevDoc = function(docid, cb) {
-  getSecondDoc(docid, true, cb);
+  getSecondDoc({descending: true, endkey: docid}, cb);
 };
 
 // Return the document that comes after docid
 var getNextDoc = function(docid, cb) {
-  getSecondDoc(docid, false, cb);
+  getSecondDoc({descending: false, startkey: docid}, cb);
 };
 
 // Used by both getNextDoc and getPrevDoc. The only difference is if we sort
-// the documents in ascending or descending order.
-var getSecondDoc = function(docid, desc, cb) {
-  db.alldocs({include_docs: true, endkey: docid,
-    descending: desc, limit: 2}, function(err, res) {
+// the documents in ascending or descending order and if we're setting
+// startKey or endKey so we take opts containing these two options and then
+// merge in the common stuff.
+var getSecondDoc = function(opts, cb) {
+  opts.include_docs = true;
+  opts.limit = 2;
+  db.allDocs(opts, function(err, res) {
       if (err) {
         cb(err, null);
       } else {
         if (res.rows.length <= 1) {
-          return null;
+          console.error('getSecondDoc only got one result: ', res);
         } else {
           cb(null, res.rows[1].doc);
         }
@@ -102,6 +106,12 @@ var RankingsTable = function() {
   var $head = $('<thead><tr><th>Rankings</th></tr></thead>');
   // The id of the doc whose results are currently displayed
   var currentDoc = null;
+
+  // The largest document in the database
+  var lastDoc = MIN_DOC_ID;
+  var firstDoc = MAX_DOC_ID;
+  var $forwardBtn = $('#go-forward');
+  var $backBtn = $('#go-back');
 
   var afterMatchRecorded = function() {
     $matchForm.addClass('hidden');
@@ -190,15 +200,88 @@ var RankingsTable = function() {
     $('#event').empty().append($datePart, $eventPart);
   };
 
+  var displayDoc = function(doc) {
+    console.log('Updating table with %s', doc._id);
+    currentDoc = doc._id;
+    buildTable(doc.ranking);
+    displayEvent(doc);
+    updateNavBtns();
+  };
+
+
+  var navForward = function() {
+    console.log('Moving forward');
+    console.assert(currentDoc);
+    if (currentDoc < lastDoc) {
+      getNextDoc(currentDoc, function(err, doc) {
+        if (err) {
+          console.error('Error getting the next document:', err);
+        } else {
+          console.assert(doc && doc._id > currentDoc);
+          displayDoc(doc);
+        }
+      });
+    } else {
+      console.log('User click forward, but we are already displaying ' +
+          'the latest document. Ignoring');
+    }
+  };
+
+  var navBack = function() {
+    console.log('Moving backward');
+    console.assert(currentDoc);
+    if (currentDoc > firstDoc) {
+      getPrevDoc(currentDoc, function(err, doc) {
+        if (err) {
+          console.error('Error getting the previous document:', err);
+        } else {
+          console.assert(doc && doc._id < currentDoc);
+          displayDoc(doc);
+        }
+      });
+    } else {
+      console.log('User click back, but we are already displaying ' +
+          'the earliest document. Ignoring');
+    }
+
+  };
+
+  $forwardBtn.on('click', navForward);
+  $backBtn.on('click', navBack);
+
+  var enableBtn = function($btn) {
+    $btn.addClass('btn-enabled');
+    $btn.removeClass('btn-disabled');
+  };
+
+  var disableBtn = function($btn) {
+    $btn.removeClass('btn-enabled');
+    $btn.addClass('btn-disabled');
+  };
+
+  var updateNavBtns = function() {
+    if (currentDoc && currentDoc < lastDoc) {
+      enableBtn($forwardBtn);
+    }
+    if (currentDoc && currentDoc > firstDoc) {
+      enableBtn($backBtn);
+    }
+    if (currentDoc && currentDoc === lastDoc) {
+      disableBtn($forwardBtn);
+    }
+    if (currentDoc && currentDoc === firstDoc) {
+      disableBtn($backBtn);
+    }
+  };
+
+
   var updateFromLatestDoc = function() {
     getLatestDoc(function(err, doc) {
       if (err) {
         console.error('Unable to fetch latest document to build table');
       } else {
         if (doc) {
-          buildTable(doc.ranking);
-          displayEvent(doc);
-          currentDoc = doc._id;
+          displayDoc(doc);
         }
       }
     });
@@ -207,16 +290,30 @@ var RankingsTable = function() {
   // Called when a changed document is detected.
   var updateOnChanges = function(change) {
     var doc = change.doc;
-    if (!currentDoc || doc._id >= currentDoc) {
-      currentDoc = doc._id;
-      console.log('Updating table with %s', doc._id);
-      buildTable(doc.ranking);
-      displayEvent(doc);
+    // The min doc is just a place holder.
+    if (doc._id == MIN_DOC_ID) {
+      return;
+    }
+
+    if (doc._id > lastDoc) {
+      lastDoc = doc._id;
+      updateNavBtns();
+    }
+    if (doc._id < firstDoc) {
+      firstDoc = doc._id;
+      updateNavBtns();
+    }
+
+    if (currentDoc && doc._id == currentDoc) {
+      displayDoc(doc);
     }
   };
 
   updateFromLatestDoc();
 
+  // Note that when we first start up, the updateOnChanges method will be
+  // called with every single document in the database. That allows us to
+  // maintain the firstDoc and lastDoc values.
   db.changes({
     include_docs: true,
     continuous: true,

@@ -106,9 +106,9 @@
    </head>
    <body>
       <header>
-      <div id="go-back" class="btn-enabled">&olt;</div>
+      <div id="go-back">&olt;</div>
       <div id="event"></div>
-      <div id="go-forward" class="btn-disabled">&ogt;</div>
+      <div id="go-forward">&ogt;</div>
       </header>
       <table id="rankings">
       </table>
