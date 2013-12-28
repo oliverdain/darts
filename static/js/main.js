@@ -139,6 +139,30 @@ var RankingsTable = function() {
     $table = $newTable;
   };
 
+  var displayEvent = function(doc) {
+    if (!doc || !doc.event) {
+      $('#event').text('None');
+    }
+    var evnt = doc.event;
+    var dt = moment.utc(doc._id, 'YYYY-MM-DDTHH:mm:ss').local();
+    var dateStr = dt.format('MMMM D, YYYY h:mm:ss A');
+    var $datePart = $('<div/>', {'class': 'event-date'}).text(dateStr);
+    if (evnt.type === 'New Player') {
+      var txt = evnt.player + ' joined';
+    } else {
+      console.assert(evnt.type === 'Match');
+      var winner = evnt.winner;
+      if (evnt.player1 === evnt.winner) {
+        var other = evnt.player2;
+      } else {
+        var other = evnt.player1;
+      }
+      var txt = winner + ' beat ' + other;
+    }
+    $eventPart = $('<div/>', {'class': 'event-summary'}).text(txt);
+    $('#event').empty().append($datePart, $eventPart);
+  };
+
   var updateFromLatestDoc = function() {
     getLatestDoc(function(err, doc) {
       if (err) {
@@ -146,6 +170,7 @@ var RankingsTable = function() {
       } else {
         if (doc) {
           buildTable(doc.ranking);
+          displayEvent(doc);
           currentDoc = doc._id;
         }
       }
@@ -159,6 +184,7 @@ var RankingsTable = function() {
       currentDoc = doc._id;
       console.log('Updating table with %s', doc._id);
       buildTable(doc.ranking);
+      displayEvent(doc);
     }
   };
 
