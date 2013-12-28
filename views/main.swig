@@ -23,7 +23,7 @@
             width: 80%;
             margin-left: auto;
             margin-right: auto;
-            font-size: xx-large;
+            font-size: 4em;
          }
             
          #rankings thead {
@@ -67,10 +67,49 @@
             padding-top: 0.5em;
             padding-bottom: 0.5em;
          }
+
+         header {
+            position: relative;
+         }
+
+         #go-back {
+            position: absolute;
+            left: 0;
+            top: 0;
+            font-size: 5em;
+         }
+
+         #go-forward {
+            position: absolute;
+            right: 0;
+            top: 0;
+            font-size: 5em;
+         }
+
+         .btn-enabled {
+            color: black;
+         }
+
+         .btn-enabled:hover {
+            cursor: pointer;
+            color: #D59818;
+         }
+
+         .btn-disabled {
+            color: #808080;
+         }
+
+         #event {
+            font-size: 3em;
+         }
       </style>
    </head>
    <body>
+      <header>
+      <div id="go-back" class="btn-enabled">&olt;</div>
       <div id="event"></div>
+      <div id="go-forward" class="btn-disabled">&ogt;</div>
+      </header>
       <table id="rankings">
       </table>
 

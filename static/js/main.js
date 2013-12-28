@@ -17,7 +17,34 @@ var getLatestDoc = function(cb) {
         }
       }
     });
-}
+};
+
+// Return the document that comes before docid
+var getPrevDoc = function(docid, cb) {
+  getSecondDoc(docid, true, cb);
+};
+
+// Return the document that comes after docid
+var getNextDoc = function(docid, cb) {
+  getSecondDoc(docid, false, cb);
+};
+
+// Used by both getNextDoc and getPrevDoc. The only difference is if we sort
+// the documents in ascending or descending order.
+var getSecondDoc = function(docid, desc, cb) {
+  db.alldocs({include_docs: true, endkey: docid,
+    descending: desc, limit: 2}, function(err, res) {
+      if (err) {
+        cb(err, null);
+      } else {
+        if (res.rows.length <= 1) {
+          return null;
+        } else {
+          cb(null, res.rows[1].doc);
+        }
+      }
+    });
+};
 
 var docIdForNow = function() {
   d = new Date();
