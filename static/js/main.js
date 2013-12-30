@@ -106,12 +106,17 @@ var RankingsTable = function() {
   var $head = $('<thead><tr><th>Rankings</th></tr></thead>');
   // The id of the doc whose results are currently displayed
   var currentDoc = null;
+  // If in history mode we can browse prior matches, but we can't record new
+  // matches. When not in history mode, the rankings table always shows the
+  // most recent rankings and updates when new matches are recorded.
+  var historyMode = false;
 
   // The largest document in the database
   var lastDoc = MIN_DOC_ID;
   var firstDoc = MAX_DOC_ID;
   var $forwardBtn = $('#go-forward');
   var $backBtn = $('#go-back');
+  var $histCheck = $('#hist-check');
 
   var afterMatchRecorded = function() {
     $matchForm.addClass('hidden');
@@ -149,7 +154,25 @@ var RankingsTable = function() {
     $matchForm.removeClass('hidden');
   };
 
+
+  var onHistClick = function(evnt) {
+    if ($histCheck.prop('checked')) {
+      $forwardBtn.removeClass('hidden');
+      $backBtn.removeClass('hidden');
+    } else {
+      $forwardBtn.addClass('hidden');
+      $backBtn.addClass('hidden');
+      updateFromLatestDoc();
+    }
+  };
+
+  $histCheck.on('click', onHistClick);
+
   var onRowClick = function() {
+    if ($histCheck.prop('checked')) {
+      console.log('Row clicked in historical mode - ignoring');
+      return;
+    }
     var $row = $(this);
     $row.toggleClass('selected');
     $selectedRows = $('.selected');
@@ -304,7 +327,11 @@ var RankingsTable = function() {
       updateNavBtns();
     }
 
-    if (currentDoc && doc._id == currentDoc) {
+    if (!$histCheck.prop('checked') && doc._id > currentDoc) {
+      // If not in historical mode and we got a new doc, show it.
+      updateFromLatestDoc();
+    } else if (currentDoc && doc._id == currentDoc) {
+      // Update the currently viewed doc if it has changed.
       displayDoc(doc);
     }
   };

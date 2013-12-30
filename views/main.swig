@@ -8,9 +8,13 @@
    </head>
    <body>
       <header>
-      <div id="go-back">&lt;</div>
+      <div id="hist-cur">
+         <input type="checkbox" name="historical" id="hist-check">
+         <label for="hist-check">View history</label>
+      </div>
+      <div id="go-back" class="hidden">&lt;</div>
       <div id="event"></div>
-      <div id="go-forward">&gt;</div>
+      <div id="go-forward" class="hidden">&gt;</div>
       </header>
       <table id="rankings">
       </table>
