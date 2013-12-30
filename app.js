@@ -4,6 +4,7 @@ var path = require('path');
 var swig = require('swig');
 var PouchDB = require('pouchdb');
 var request = require('request');
+var lessMiddleware = require('less-middleware');
 
 var app = express();
 app.engine('swig', swig.renderFile);
@@ -43,7 +44,6 @@ app.use(function(req, res, next) {
 app.use(express.favicon());
 app.use(express.logger('dev'));
 app.use(express.bodyParser());
-
 
 // Set up an initial database if necessary.
 var dbHost = process.env.DB || 'http://localhost:5984/darts';
@@ -180,6 +180,11 @@ if ('development' == app.get('env')) {
 var STATIC_PATH = path.join(__dirname, '/static');
 app.use(express.static(STATIC_PATH));
 app.use(app.router);
+app.use(lessMiddleware({
+        dest: '/css',
+        src: '/less', 
+        root: STATIC_PATH
+    }));
 
 app.get('/', function(req, res) {
   res.render('main', {dbUrl: dbHost});

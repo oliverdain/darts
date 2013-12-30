@@ -1,0 +1,97 @@
+#add-user-link:hover {
+   cursor: pointer;
+}
+
+.hidden {
+   display: none;
+}
+
+body {
+   text-align: center;
+}
+
+#rankings {
+   border: solid #000 1px;
+   border-collapse: collapse;
+   width: 80%;
+   margin-left: auto;
+   margin-right: auto;
+   font-size: 4em;
+}
+   
+#rankings thead {
+   font-variant: small-caps;
+   font-weight: bold;
+   border-bottom: double #000 5px;
+}
+
+#rankings tr {
+   border-top: 2px solid black;
+}
+
+#rankings tr:nth-child(2n + 2) {
+   background-color: #6B85BD;
+}
+
+#rankings tr.selected {
+   background-color: yellow;
+}
+
+#rankings td {
+   padding-top: 0.5em;
+   padding-bottom: 0.5em;
+   text-align: center;
+}
+
+#match {
+   position: fixed;
+   top: 0;
+   bottom: 0;
+   left: 0;
+   right: 0;
+   background-color: rgba(192, 192, 192, 0.8);
+   font-size: xx-large;
+}
+
+.match-button {
+   display: inline-block;
+   font-size: xx-large;
+   width: 20em;
+   padding-top: 0.5em;
+   padding-bottom: 0.5em;
+}
+
+header {
+   position: relative;
+}
+
+#go-back {
+   position: absolute;
+   left: 0;
+   top: 0;
+   font-size: 5em;
+}
+
+#go-forward {
+   position: absolute;
+   right: 0;
+   top: 0;
+   font-size: 5em;
+}
+
+.btn-enabled {
+   color: black;
+}
+
+.btn-enabled:hover {
+   cursor: pointer;
+   color: #D59818;
+}
+
+.btn-disabled {
+   color: #808080;
+}
+
+#event {
+   font-size: 3em;
+}
