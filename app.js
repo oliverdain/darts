@@ -113,7 +113,7 @@ var rankingsEqual = function(r1, r2) {
     return false;
   } else {
     for (var i = 0; i < r1.length; ++i) {
-      if (r1[1] != r2[i]) {
+      if (r1[i] != r2[i]) {
         return false;
       }
     }
@@ -139,12 +139,12 @@ var resolveChanges = function(change) {
           if (res.rows.length <= 1) {
             return;
           }
-          var updates = [];
           // Starting with the first document, apply the changes in the next
           // document. If the computed rankings match the observed, we're done.
           // If not, we need to fix that document.
           var curRanking = res.rows[0].doc.ranking;
           for (var i = 1; i < res.rows.length; ++i) {
+            console.log('Checking %s', res.rows[i].doc._id);
             var nextDoc = res.rows[i].doc;
             var newRanking = applyEvent(curRanking, nextDoc['event']);
             if (rankingsEqual(newRanking, nextDoc.ranking)) {
@@ -155,7 +155,7 @@ var resolveChanges = function(change) {
                   'Computed ranking: %j. Old ranking: %j',
                   newRanking, nextDoc.ranking);
               nextDoc.ranking = newRanking;
-              updates.push(nextDoc);
+              db.put(nextDoc);
             }
             curRanking = newRanking;
           }
