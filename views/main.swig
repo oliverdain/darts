@@ -8,13 +8,16 @@
    </head>
    <body>
       <header>
-      <div id="hist-cur">
-         <input type="checkbox" name="historical" id="hist-check">
-         <label for="hist-check">View history</label>
-      </div>
-      <div id="go-back" class="hidden">&lt;</div>
-      <div id="event"></div>
-      <div id="go-forward" class="hidden">&gt;</div>
+         <div id="hist-check-wrapper">
+            <div id="hist-cur">
+               <input type="checkbox" name="historical" id="hist-check">
+               <label for="hist-check"></label>
+            </div>
+            <h2>View history</h2>
+         </div>
+         <div id="go-back" class="hidden">&lt;</div>
+         <div id="event"></div>
+         <div id="go-forward" class="hidden">&gt;</div>
       </header>
       <table id="rankings">
       </table>
