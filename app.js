@@ -14,10 +14,6 @@ app.set('port', process.env.PORT || 3000);
 app.set('view engine', 'swig');
 app.set('views', __dirname + '/views');
 
-app.use(express.basicAuth(function(user, pass){
-  return 'darts' == user && 'D4rts' == pass;
-}));
-
 // Proxy all requests to /darts to the local CouchDB instance.
 //
 // Have to do this before bodyparser or it messes things up.
