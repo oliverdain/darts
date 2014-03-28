@@ -5,6 +5,7 @@ var swig = require('swig');
 var PouchDB = require('pouchdb');
 var request = require('request');
 var lessMiddleware = require('less-middleware');
+var flash = require('connect-flash');
 
 var app = express();
 app.engine('swig', swig.renderFile);
@@ -44,6 +45,9 @@ app.use(function(req, res, next) {
 app.use(express.favicon());
 app.use(express.logger('dev'));
 app.use(express.bodyParser());
+app.use(flash());
+app.use(express.cookieParser());
+app.use(express.cookieSession({secret: '!@HLSJ00184ljaoue0#'}));
 
 // Set up an initial database if necessary.
 var dbHost = process.env.DB || 'http://localhost:5984/darts';
@@ -186,14 +190,41 @@ app.use(lessMiddleware({
         root: STATIC_PATH
     }));
 
-app.get('/', function(req, res) {
-  res.render('main', {dbUrl: dbHost});
+var requireAuth = function(req, res, next) {
+  if (req.session && req.session.user) {
+    next();
+  } else if (req.path == '/manifest') {
+    // Send a 404 if a user who isn't logged in request the manifest file. That
+    // way they remove everything from their cache and can't use the app any
+    // more (this also clears out older versions of the app that didn't use
+    // cookie auth).
+    console.log('User not logged in requested the manifest.');
+    res.status(404).send('No manifest file until you log in');
+  } else {
+    console.log('User not logged in - redirecting to the login page');
+    res.redirect('/login');
+  }
+};
+
+app.get('/login', function(req, res) {
+  res.render('login', {flash: req.flash('error')});
 });
 
-app.get('/ping', function(req, res) {
-  var d = new Date();
-  res.send(d.toString());
+app.post('/login_submit', function(req, res, next) {
+  console.log('login_submit called');
+  if (req.body.username == 'darts' && req.body.password == 'D4rts') {
+    console.log('User logged in');
+    req.session.user = 'darts';
+    res.redirect('/main');
+  } else {
+    console.log('User tried to log in with %s:%s. Back to login',
+      req.body.username, req.body.password);
+    req.flash('error', 'Incorrect username and/or password');
+    res.redirect('login');
+  }
 });
+
+app.get('*', requireAuth);
 
 app.get('/manifest', function(req, res) {
   res.header("Content-Type", "text/cache-manifest");
@@ -204,6 +235,15 @@ app.get('/manifest', function(req, res) {
       console.log('Mainfest file sent.');
     }
   });
+});
+
+app.get('/main', function(req, res) {
+  res.render('main', {dbUrl: dbHost});
+});
+
+app.get('/ping', function(req, res) {
+  var d = new Date();
+  res.send(d.toString());
 });
 
 http.createServer(app).listen(app.get('port'), function(){
