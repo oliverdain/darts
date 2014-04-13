@@ -1,11 +1,8 @@
 CACHE MANIFEST
-# Version 244
+# Version 247
 
 CACHE:
 js/main.js
-js/third_party/jquery-1.9.1.min.js
-js/third_party/pouchdb-nightly.min.js
-js/third_party/moment.min.js
 css/main.css
 img/add_user.png
 

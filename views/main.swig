@@ -1,8 +1,5 @@
 <html manifest="/manifest">
    <head>
-      <script src="js/third_party/jquery-1.9.1.min.js"></script>
-      <script src="js/third_party/pouchdb-nightly.min.js"></script>
-      <script src="js/third_party/moment.min.js"></script>
       <script src="js/main.js"></script>
       <link rel="stylesheet" type="text/css" href="/css/main.css">
    </head>

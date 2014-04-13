@@ -6,6 +6,8 @@ var PouchDB = require('pouchdb');
 var request = require('request');
 var lessMiddleware = require('less-middleware');
 var flash = require('connect-flash');
+var browserify = require('browserify-middleware');
+var fs = require('fs');
 
 var app = express();
 app.engine('swig', swig.renderFile);
@@ -177,6 +179,8 @@ if ('development' == app.get('env')) {
   swig.setDefaults({ cache: false });
 }
 
+
+
 var STATIC_PATH = path.join(__dirname, '/static');
 app.use(express.static(STATIC_PATH));
 app.use(app.router);
@@ -201,6 +205,19 @@ var requireAuth = function(req, res, next) {
     res.redirect('/login');
   }
 };
+
+// Browserify processes require() calls so we can build a single big JS file to
+// serve and re-use modules between node and the browser. But, we don't want it
+// to parse 3rd party modules for 2 reasons: first - for big libs like jquery
+// it's really slow, and 2nd some (like pouchdb) can be used in the browser or
+// in node so they do contain conditional requires which should be ignored.
+var browserifyNoParse = fs.readdirSync('./js/third_party');
+for (var ti = 0; ti < browserifyNoParse.length; ++ti) {
+  browserifyNoParse[ti] = './js/third_party/' + browserifyNoParse[ti];
+}
+console.log('browserify will not parse: %j', browserifyNoParse);
+app.get('/js/main.js', browserify('./js/main.js',
+      {noParse: browserifyNoParse}));
 
 app.get('/login', function(req, res) {
   res.render('login', {flash: req.flash('error')});

@@ -1,3 +1,7 @@
+require('./third_party/jquery-1.9.1.min');
+var PouchDB = require('./third_party/pouchdb-nightly.min.js');
+var moment = require('./third_party/moment.min');
+
 // Database
 var db = new PouchDB('darts');
 
