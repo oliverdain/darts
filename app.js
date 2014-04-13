@@ -8,6 +8,7 @@ var lessMiddleware = require('less-middleware');
 var flash = require('connect-flash');
 var browserify = require('browserify-middleware');
 var fs = require('fs');
+var dartEvents = require('./shared/dart-events');
 
 var app = express();
 app.engine('swig', swig.renderFile);
@@ -51,14 +52,12 @@ app.use(express.cookieSession({secret: '!@HLSJ00184ljaoue0#'}));
 var dbHost = process.env.DB || 'http://localhost:5984/darts';
 console.info('Connecting to database at: %s', dbHost);
 var db = new PouchDB(dbHost);
-// Keys are YYYY-MM-DDTHH:MM:SS so to create an initial state document we
-// create it with year, month, etc. as 0
-var START_DOC_ID = '0000-00-00T00:00:00';
-db.get(START_DOC_ID, function(err, doc) {
+db = require('./shared/db')(db);
+db.get(db.START_DOC_ID, function(err, doc) {
   if (err) {
     if (err.status == 404) {
       db.put({
-        _id: START_DOC_ID,
+        _id: db.START_DOC_ID,
         ranking: []
       }, function(err, response) {
         if (err) {
@@ -74,54 +73,6 @@ db.get(START_DOC_ID, function(err, doc) {
     }
   }
 });
-
-// Used by the resolveChanges below.
-var applyEvent = function(ranking, evnt) {
-  if (evnt.type === 'New Player') {
-    // Make a copy
-    var res = ranking.slice(0);
-    console.assert(evnt.player);
-    res.push(evnt.player);
-    return res;
-  } else {
-    console.assert(evnt.type === 'Match');
-    var i1 = ranking.indexOf(evnt.player1);
-    var i2 = ranking.indexOf(evnt.player2);
-    var winner = evnt.winner;
-    var swap = false;
-    if (i1 < i2) {
-      if (evnt.winner === evnt.player2) {
-        swap = true;
-      }
-    } else {
-      if (evnt.winner === evnt.player1) {
-        swap = true;
-      }
-    }
-    if (swap) {
-      var res = ranking.slice(0);
-      var t = res[i1];
-      res[i1] = res[i2];
-      res[i2] = t;
-      return res;
-    } else {
-      return ranking;
-    }
-  }
-};
-
-var rankingsEqual = function(r1, r2) {
-  if (r1.length != r2.length) {
-    return false;
-  } else {
-    for (var i = 0; i < r1.length; ++i) {
-      if (r1[i] != r2[i]) {
-        return false;
-      }
-    }
-    return true;
-  }
-};
 
 // Function that gets called on each database change. It's job is to ensure the
 // database is consistent. For example, suppose we have two offline users, A and
@@ -148,8 +99,9 @@ var resolveChanges = function(change) {
           for (var i = 1; i < res.rows.length; ++i) {
             console.log('Checking %s', res.rows[i].doc._id);
             var nextDoc = res.rows[i].doc;
-            var newRanking = applyEvent(curRanking, nextDoc['event']);
-            if (rankingsEqual(newRanking, nextDoc.ranking)) {
+            var newRanking =
+              dartEvents.applyEvent(curRanking, nextDoc['event']);
+            if (dartEvents.rankingsEqual(newRanking, nextDoc.ranking)) {
               console.info('Change consistent.');
               break;
             } else {

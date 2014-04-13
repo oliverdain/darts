@@ -1,99 +1,35 @@
 require('./third_party/jquery-1.9.1.min');
 var PouchDB = require('./third_party/pouchdb-nightly.min.js');
 var moment = require('./third_party/moment.min');
+var dartEvents = require('../shared/dart-events');
 
 // Database
 var db = new PouchDB('darts');
+var db = require('../shared/db')(db);
 
 var MAX_DOC_ID = '9999-99-99T99:99:99';
 var MIN_DOC_ID = '0000-00-00T00:00:00';
 
-var getLatestDoc = function(cb) {
-  db.allDocs({include_docs: true, endkey: MAX_DOC_ID,
-    descending: true, limit: 1}, function(err, res) {
-      if (err) {
-        cb(err, null);
-      } else {
-        if (res.rows.length === 0) {
-          return null;
-        } else {
-          console.assert(res.rows.length == 1);
-          cb(null, res.rows[0].doc);
-        }
-      }
-    });
-};
-
-// Return the document that comes before docid
-var getPrevDoc = function(docid, cb) {
-  getSecondDoc({descending: true, endkey: docid}, cb);
-};
-
-// Return the document that comes after docid
-var getNextDoc = function(docid, cb) {
-  getSecondDoc({descending: false, startkey: docid}, cb);
-};
-
-// Used by both getNextDoc and getPrevDoc. The only difference is if we sort
-// the documents in ascending or descending order and if we're setting
-// startKey or endKey so we take opts containing these two options and then
-// merge in the common stuff.
-var getSecondDoc = function(opts, cb) {
-  opts.include_docs = true;
-  opts.limit = 2;
-  db.allDocs(opts, function(err, res) {
-      if (err) {
-        cb(err, null);
-      } else {
-        if (res.rows.length <= 1) {
-          console.error('getSecondDoc only got one result: ', res);
-        } else {
-          cb(null, res.rows[1].doc);
-        }
-      }
-    });
-};
-
-var docIdForNow = function() {
-  d = new Date();
-  var iso = d.toISOString();
-  return iso.replace(/\.\d{3}Z/, '');
-};
-
 var insertWinner = function(p1, p2, winner) {
-  getLatestDoc(function(err, curDoc) {
+  db.getLatestDoc(function(err, curDoc) {
     if (err) {
       console.error('Uable to get latest document. Match not recorded');
       return;
     }
 
-    var ranking = curDoc.ranking.slice(0);
-    var p1i = ranking.indexOf(p1);
-    var p2i = ranking.indexOf(p2);
-    if (p1i < p2i) {
-      if (winner == p2) {
-        var t = ranking[p1i];
-        ranking[p1i] = ranking[p2i];
-        ranking[p2i] = t;
-      }
-    } else {
-      if (winner == p1) {
-        var t = ranking[p1i];
-        ranking[p1i] = ranking[p2i];
-        ranking[p2i] = t;
-      }
-    }
-
     var newDoc = {
-      _id: docIdForNow(),
+      _id: db.docIdForNow(),
       'event': {
         type: 'Match',
         player1: p1,
         player2: p2,
         winner: winner
-      },
-      ranking: ranking
+      }
     };
+
+    newDoc.ranking = dartEvents.applyMatch(
+      curDoc.ranking, newDoc.event);
+
     db.put(newDoc, function(err) {
       if (err) {
         console.error('Error inserting new rankings:', err);
@@ -240,7 +176,7 @@ var RankingsTable = function() {
     console.log('Moving forward');
     console.assert(currentDoc);
     if (currentDoc < lastDoc) {
-      getNextDoc(currentDoc, function(err, doc) {
+      db.getNextDoc(currentDoc, function(err, doc) {
         if (err) {
           console.error('Error getting the next document:', err);
         } else {
@@ -258,7 +194,7 @@ var RankingsTable = function() {
     console.log('Moving backward');
     console.assert(currentDoc);
     if (currentDoc > firstDoc) {
-      getPrevDoc(currentDoc, function(err, doc) {
+      db.getPrevDoc(currentDoc, function(err, doc) {
         if (err) {
           console.error('Error getting the previous document:', err);
         } else {
@@ -303,7 +239,7 @@ var RankingsTable = function() {
 
 
   var updateFromLatestDoc = function() {
-    getLatestDoc(function(err, doc) {
+    db.getLatestDoc(function(err, doc) {
       if (err) {
         console.error('Unable to fetch latest document to build table');
       } else {
@@ -376,11 +312,11 @@ var setupAddUser = function(rankingsTable) {
   });
 
   $submit.on('click', function() {
-    getLatestDoc(function(err, doc) {
+    db.getLatestDoc(function(err, doc) {
       if (err) {
         console.error('Error getting latest doc:', err);
       } else {
-        var newDoc = {_id: docIdForNow(),
+        var newDoc = {_id: db.docIdForNow(),
           'event': {type: 'New Player', player: $name.val()},
           ranking: doc.ranking
         };
