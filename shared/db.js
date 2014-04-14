@@ -8,7 +8,7 @@ module.exports = function(db) {
   db.MAX_DOC_ID = '9999-99-99T99:99:99';
   db.MIN_DOC_ID = '0000-00-00T00:00:00';
 
-  db.initializeIfNecessary = function() {
+  db.initializeIfNecessary = function(cb) {
     db.get(db.MIN_DOC_ID, function(err, doc) {
       if (err) {
         if (err.status == 404) {
@@ -21,12 +21,16 @@ module.exports = function(db) {
               process.exit(1);
             } else {
               console.log('Creating initial document in database:', response);
+              cb();
             }
           });
         } else {
           console.error('Error checking for starting doc:', err);
           process.exit(1);
         }
+      } else {
+        console.log('Database was already initialized');
+        cb();
       }
     });
   };
