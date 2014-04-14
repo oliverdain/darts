@@ -5,19 +5,40 @@
 // PouchDB object that are specific to this applicaton.
 
 module.exports = function(db) {
-  var MAX_DOC_ID = '9999-99-99T99:99:99';
-  var MIN_DOC_ID = '0000-00-00T00:00:00';
+  db.MAX_DOC_ID = '9999-99-99T99:99:99';
+  db.MIN_DOC_ID = '0000-00-00T00:00:00';
 
-  db.START_DOC_ID = MIN_DOC_ID;
+  db.initializeIfNecessary = function() {
+    db.get(db.MIN_DOC_ID, function(err, doc) {
+      if (err) {
+        if (err.status == 404) {
+          db.put({
+            _id: db.MIN_DOC_ID,
+            ranking: []
+          }, function(err, response) {
+            if (err) {
+              console.error('Error creating initial document:', err);
+              process.exit(1);
+            } else {
+              console.log('Creating initial document in database:', response);
+            }
+          });
+        } else {
+          console.error('Error checking for starting doc:', err);
+          process.exit(1);
+        }
+      }
+    });
+  };
 
   db.getLatestDoc = function(cb) {
-    db.allDocs({include_docs: true, endkey: MAX_DOC_ID,
+    db.allDocs({include_docs: true, startkey: db.MAX_DOC_ID,
       descending: true, limit: 1}, function(err, res) {
         if (err) {
           cb(err, null);
         } else {
           if (res.rows.length === 0) {
-            return null;
+            cb(null, null);
           } else {
             console.assert(res.rows.length == 1);
             cb(null, res.rows[0].doc);
@@ -49,6 +70,7 @@ module.exports = function(db) {
         } else {
           if (res.rows.length <= 1) {
             console.error('getSecondDoc only got one result: ', res);
+            cb(null, null);
           } else {
             cb(null, res.rows[1].doc);
           }

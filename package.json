@@ -12,6 +12,11 @@
     "pouchdb": "*",
     "request": "*",
     "connect-flash": "*",
-    "browserify-middleware": "*"
+    "browserify-middleware": "*",
+    "memdown": "*",
+    "async": "*"
+  },
+  "scripts": {
+    "test": "mocha tests/*"
   }
 }

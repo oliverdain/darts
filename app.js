@@ -53,75 +53,13 @@ var dbHost = process.env.DB || 'http://localhost:5984/darts';
 console.info('Connecting to database at: %s', dbHost);
 var db = new PouchDB(dbHost);
 db = require('./shared/db')(db);
-db.get(db.START_DOC_ID, function(err, doc) {
-  if (err) {
-    if (err.status == 404) {
-      db.put({
-        _id: db.START_DOC_ID,
-        ranking: []
-      }, function(err, response) {
-        if (err) {
-          console.error('Error creating initial document:', err);
-          process.exit(1);
-        } else {
-          console.log('Creating initial document in database:', response);
-        }
-      });
-    } else {
-      console.error('Error checking for starting doc:', err);
-      process.exit(1);
-    }
-  }
-});
-
-// Function that gets called on each database change. It's job is to ensure the
-// database is consistent. For example, suppose we have two offline users, A and
-// B that both record the results of different matches. Assume A's match happen
-// before B's. If B gets online and sync's before A the data would be incorrect.
-// However, when A gets online we'll get an update and we can then look at all
-// documents that come *after* A and fix any problems.
-var resolveChanges = function(change) {
-  var doc = change.doc;
-  db.allDocs({include_docs: true, startkey: doc._id},
-      function(err, res) {
-        if (err) {
-          console.error('Unable to retrieve updated documents!', err);
-        } else {
-          console.log('%d documents exist after the changed document %s',
-            res.rows.length - 1, doc._id);
-          if (res.rows.length <= 1) {
-            return;
-          }
-          // Starting with the first document, apply the changes in the next
-          // document. If the computed rankings match the observed, we're done.
-          // If not, we need to fix that document.
-          var curRanking = res.rows[0].doc.ranking;
-          for (var i = 1; i < res.rows.length; ++i) {
-            console.log('Checking %s', res.rows[i].doc._id);
-            var nextDoc = res.rows[i].doc;
-            var newRanking =
-              dartEvents.applyEvent(curRanking, nextDoc['event']);
-            if (dartEvents.rankingsEqual(newRanking, nextDoc.ranking)) {
-              console.info('Change consistent.');
-              break;
-            } else {
-              console.info('Change requires update. ' +
-                  'Computed ranking: %j. Old ranking: %j',
-                  newRanking, nextDoc.ranking);
-              nextDoc.ranking = newRanking;
-              db.put(nextDoc);
-            }
-            curRanking = newRanking;
-          }
-        }
-      });
-};
+db.initializeIfNecessary();
 
 // Listen to, and resolve, all database changes.
 db.changes({
   include_docs: true,
   continuous: true,
-  onChange: resolveChanges
+  onChange: require('./resolve-changes')(db)
 });
 
 // development only
@@ -130,8 +68,6 @@ if ('development' == app.get('env')) {
   // Disable the swig cache so templates are always re-rendered
   swig.setDefaults({ cache: false });
 }
-
-
 
 var STATIC_PATH = path.join(__dirname, '/static');
 app.use(express.static(STATIC_PATH));
