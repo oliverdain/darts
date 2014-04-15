@@ -111,6 +111,68 @@ describe('resolveChanges', function() {
       });
   });
 
+  // Similar to the above, but here the user missed a document and so calculated
+  // the incorrect ranking, but the documents arrive in the correct order.
+  it('Should resolve conflicts when a bad doc arrives', function(done) {
+    var initialRanking;
+
+    async.waterfall([
+      addUsers,
+
+      db.getLatestDoc,
+
+      function(latestDoc, cb) {
+        initialRanking = latestDoc.ranking;
+        // We add a match where Gourdy beat Oliver at 1:00.
+        var matchDoc = getMatchDoc(
+            '2014-04-13T01:00:00', 'Gourdy', 'Oliver', 'Gourdy');
+        matchDoc.ranking = dartEvents.applyMatch(
+          initialRanking, matchDoc.event);
+        assert.deepEqual(matchDoc.ranking,
+          ['Gourdy', 'Sandy', 'Oliver', 'Alice', 'Nutter']);
+        db.put(matchDoc, cb);
+      },
+
+      // Now add a later doc, but it's ranking is computed off the initial
+      // ranking, not the prior match (simulating a user who missed a DB
+      // update).
+      function(result, cb) {
+        var matchDoc = getMatchDoc(
+            '2014-04-13T02:00:00', 'Sandy', 'Oliver', 'Sandy');
+        matchDoc.ranking = dartEvents.applyMatch(
+            initialRanking, matchDoc.event);
+        assert.deepEqual(matchDoc.ranking,
+            ['Sandy', 'Oliver', 'Gourdy', 'Alice', 'Nutter']);
+        db.put(matchDoc, cb);
+      },
+
+      // Have to get the document from the database so the _rev information is
+      // correct.
+      function(res, cb) {
+        db.getLatestDoc(cb);
+      },
+      
+      function(lastDoc, cb) {
+        var changeEvent = {doc: lastDoc};
+        resolveChanges(changeEvent, function() {
+          db.getLatestDoc(function(err, fixedDoc) {
+            if (err) {
+              cb(err);
+            } else {
+              console.log('Fixed doc: %j', fixedDoc);
+              assert.deepEqual(fixedDoc.ranking,
+                ['Gourdy', 'Sandy', 'Oliver', 'Alice', 'Nutter']);
+              cb();
+            }
+         }); 
+        });
+      }],
+
+      function(err) {
+        if (err) assert.fail(err);
+        done();
+      });
+  });
 });
 
 

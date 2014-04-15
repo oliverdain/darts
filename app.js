@@ -60,7 +60,6 @@ var ensureDBConsistent = function(ensureCb) {
       }],
 
       function(err) {
-        console.log('ensureDBConsistent complete');
         if (err) {
           console.error('Error making DB consistent:', err);
           process.exit(1);
