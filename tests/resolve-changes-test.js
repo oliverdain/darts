@@ -36,10 +36,12 @@ describe('resolveChanges', function() {
     return doc;
   };
 
+  var TEST_DB_NAME = 'testdb';
+
   // Destroy any old test database before running the test.
   beforeEach(function(done) {
-    PouchDB.destroy('testdb', function(err, info) {
-      db = new PouchDB('testdb');
+    PouchDB.destroy(TEST_DB_NAME, function(err, info) {
+      db = new PouchDB(TEST_DB_NAME);
       db = require('../shared/db')(db);
       resolveChanges = require('../resolve-changes')(db);
       db.initializeIfNecessary(done);
@@ -49,7 +51,7 @@ describe('resolveChanges', function() {
   // Clean up after all tests are run.
   after(function(done) {
     console.log('Testing complete, deleting database');
-    PouchDB.destroy('testdb', done);
+    PouchDB.destroy(TEST_DB_NAME, done);
   });
 
   // Tests the case where 2 events were recorded out of order so that when event
@@ -57,54 +59,58 @@ describe('resolveChanges', function() {
   it('Should resolve ranking when a doc arrives out of order', function(done) {
     var initialRanking;
 
-    var onAddUsers = function() {
-      db.getLatestDoc(function(err, latestDoc) {
-        if (err) assert.fail(err);
+    async.waterfall([
+      addUsers,
+
+      db.getLatestDoc,
+
+      function(latestDoc, cb) {
         initialRanking = latestDoc.ranking;
-        onGotInitialRanking();
-      });
-    };
-
-    var onGotInitialRanking = function() {
-      // We add a match where Gourdy beat Oliver at 1:00.
-      var matchDoc = getMatchDoc(
-          '2014-04-13T01:00:00', 'Gourdy', 'Oliver', 'Gourdy');
-      matchDoc.ranking = dartEvents.applyMatch(initialRanking, matchDoc.event);
-      assert.deepEqual(matchDoc.ranking,
-        ['Gourdy', 'Sandy', 'Oliver', 'Alice', 'Nutter']);
-      db.put(matchDoc, function(err) {
-        if (err) assert.fail(err);
-        onAddedLastMatch();
-      });
-    };
-
-    var onAddedLastMatch = function() {
-      // Now add a match that came before the final match at midnight
-      var matchDoc = getMatchDoc(
-          '2014-04-13T00:00:00', 'Sandy', 'Oliver', 'Sandy');
-      matchDoc.ranking = dartEvents.applyMatch(initialRanking, matchDoc.event);
-      assert.deepEqual(matchDoc.ranking,
-        ['Sandy', 'Oliver', 'Gourdy', 'Alice', 'Nutter']);
-      db.put(matchDoc, function(err) {
-        if (err) assert.fail(err);
-        onPriorEventAdded(matchDoc);
-      });
-    };
-
-    var onPriorEventAdded = function(priorDoc) {
-      var changeEvent = {doc: priorDoc};
-      resolveChanges(changeEvent, function() {
-        db.getLatestDoc(function(err, latestDoc) {
-          if (err) assert.fail(err);
-          assert.deepEqual(latestDoc.ranking,
-            ['Sandy', 'Gourdy', 'Oliver', 'Alice', 'Nutter']);
-          done();
+        // We add a match where Gourdy beat Oliver at 1:00.
+        var matchDoc = getMatchDoc(
+            '2014-04-13T01:00:00', 'Gourdy', 'Oliver', 'Gourdy');
+        matchDoc.ranking = dartEvents.applyMatch(
+          initialRanking, matchDoc.event);
+        assert.deepEqual(matchDoc.ranking,
+          ['Gourdy', 'Sandy', 'Oliver', 'Alice', 'Nutter']);
+        db.put(matchDoc, function(err) {
+          if (err) cb(err);
+          cb(null);
         });
-      });
-    };
+      },
 
-    addUsers(onAddUsers);
+      function(cb) {
+        // Now add a match that came before the final match at midnight
+        var matchDoc = getMatchDoc(
+            '2014-04-13T00:00:00', 'Sandy', 'Oliver', 'Sandy');
+        matchDoc.ranking = dartEvents.applyMatch(
+            initialRanking, matchDoc.event);
+        assert.deepEqual(matchDoc.ranking,
+          ['Sandy', 'Oliver', 'Gourdy', 'Alice', 'Nutter']);
+        db.put(matchDoc, function(err) {
+          if (err) cb(err);
+          cb(null, matchDoc);
+        });
+      },
+
+      function(priorDoc, cb) {
+        var changeEvent = {doc: priorDoc};
+        resolveChanges(changeEvent, function() {
+          db.getLatestDoc(function(err, latestDoc) {
+            if (err) cb(err);
+            assert.deepEqual(latestDoc.ranking,
+              ['Sandy', 'Gourdy', 'Oliver', 'Alice', 'Nutter']);
+            cb();
+          });
+        });
+      }],
+
+      function(err) {
+        if (err) assert.fail(err);
+        done();
+      });
   });
+
 });
 
 
