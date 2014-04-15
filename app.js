@@ -30,7 +30,10 @@ var ensureDBConsistent = function(ensureCb) {
   async.series([
       function(cb) {
         db.info(function(err, info) {
-          if (err) cb(err);
+          if (err) {
+            cb(err);
+            return;
+          }
           seqNumber = info.update_seq;
           console.log('Current sequence number: %s', seqNumber);
           cb(null);
@@ -40,7 +43,10 @@ var ensureDBConsistent = function(ensureCb) {
       function(cb) {
         db.allDocs({include_docs: true, startkey: db.MIN_DOC_ID},
           function(err, res) {
-            if (err) cb(err);
+            if (err) {
+              cb(err);
+              return;
+            }
 
             async.eachSeries(res.rows, function(row, callback) {
               var change = {doc: row.doc};
@@ -57,6 +63,7 @@ var ensureDBConsistent = function(ensureCb) {
           onChange: resolveChanges,
           since: seqNumber
         });
+        cb();
       }],
 
       function(err) {

@@ -6,15 +6,14 @@
     "start": "node app.js"
   },
   "dependencies": {
-    "express": "*",
-    "swig": "*",
-    "less-middleware": "*",
-    "pouchdb": "*",
-    "request": "*",
-    "connect-flash": "*",
-    "browserify-middleware": "*",
-    "memdown": "*",
-    "async": "*"
+    "express": "3.4.x",
+    "swig": "1.2.x",
+    "less-middleware": "0.1.x",
+    "pouchdb": "2.0.x",
+    "request": "2.30.x",
+    "connect-flash": "0.1.x",
+    "browserify-middleware": "2.5.x",
+    "async": "0.7.x"
   },
   "scripts": {
     "test": "mocha tests/*"

@@ -26,7 +26,10 @@ module.exports = function(db) {
               cb();
               return;
             }
-            if (err) cb(err);
+            if (err) {
+              cb(err);
+              return;
+            }
             var correctRanking = dartEvents.applyEvent(
               prevDoc.ranking, doc.event);
             if (dartEvents.rankingsEqual(correctRanking, doc.ranking)) {
