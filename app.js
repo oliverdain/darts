@@ -59,7 +59,7 @@ var ensureDBConsistent = function(ensureCb) {
         console.log('Watching for any changes after seq#: %d', seqNumber);
         db.changes({
           include_docs: true,
-          live: true,
+          continuous: true,
           onChange: resolveChanges,
           since: seqNumber
         });
