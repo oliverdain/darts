@@ -3,7 +3,6 @@
 // using a real CouchDB. Thus, this module exports a single function which takes
 // a pouchDB object. Given that, it add a bunch of handy functions to the
 // PouchDB object that are specific to this applicaton.
-
 module.exports = function(db) {
   db.MAX_DOC_ID = '9999-99-99T99:99:99';
   db.MIN_DOC_ID = '0000-00-00T00:00:00';
@@ -53,7 +52,7 @@ module.exports = function(db) {
 
   // Return the document that comes before docid
   db.getPrevDoc = function(docid, cb) {
-    getSecondDoc({descending: true, endkey: docid}, cb);
+    getSecondDoc({descending: true, startkey: docid}, cb);
   };
 
   // Return the document that comes after docid

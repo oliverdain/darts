@@ -1,14 +1,11 @@
 require('./third_party/jquery-1.9.1.min');
-var PouchDB = require('./third_party/pouchdb-nightly.min.js');
+var PouchDB = require('./third_party/pouchdb-2.1.0.min.js');
 var moment = require('./third_party/moment.min');
 var dartEvents = require('../shared/dart-events');
 
 // Database
 var db = new PouchDB('darts');
 var db = require('../shared/db')(db);
-
-var MAX_DOC_ID = '9999-99-99T99:99:99';
-var MIN_DOC_ID = '0000-00-00T00:00:00';
 
 var insertWinner = function(p1, p2, winner) {
   db.getLatestDoc(function(err, curDoc) {
@@ -52,8 +49,8 @@ var RankingsTable = function() {
   var historyMode = false;
 
   // The largest document in the database
-  var lastDoc = MIN_DOC_ID;
-  var firstDoc = MAX_DOC_ID;
+  var lastDoc = db.MIN_DOC_ID;
+  var firstDoc = db.MAX_DOC_ID;
   var $forwardBtn = $('#go-forward');
   var $backBtn = $('#go-back');
   var $histCheck = $('#hist-check');
@@ -254,7 +251,7 @@ var RankingsTable = function() {
   var updateOnChanges = function(change) {
     var doc = change.doc;
     // The min doc is just a place holder.
-    if (doc._id == MIN_DOC_ID) {
+    if (doc._id == db.MIN_DOC_ID) {
       return;
     }
 
@@ -410,7 +407,8 @@ var connectionHandling = function() {
     dbUrl = dbUrl + '/darts';
     console.info('Will replicate to %s', dbUrl);
     db.replicate.to(dbUrl, {continuous: true});
-    // for continuous replication, complete is called only when replication fails.
+    // for continuous replication, complete is called only when replication
+    // fails.
     db.replicate.from(dbUrl, {continuous: true, complete: replicationError});
     replicationInProgress = true;
   };
