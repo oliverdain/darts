@@ -1,10 +1,9 @@
 CACHE MANIFEST
-# Version 264
+# Version 286
 
 CACHE:
 js/main.js
 css/main.css
-img/add_user.png
 
 NETWORK:
 # / is explicitly on the network as an earlier version of the site had
