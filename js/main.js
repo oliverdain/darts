@@ -6,6 +6,7 @@ var dartEvents = require('../shared/dart-events');
 // Database
 var db = new PouchDB('darts');
 var db = require('../shared/db')(db);
+var rTable;
 
 var insertWinner = function(p1, p2, winner) {
   db.getLatestDoc(function(err, curDoc) {
@@ -32,11 +33,63 @@ var insertWinner = function(p1, p2, winner) {
         console.error('Error inserting new rankings:', err);
       } else {
         console.log('Rankings updated');
-        rTable.updateRankings();
+        rTable.updateFromLatestDoc();
       }
     });
   });
-}
+};
+
+var ButtonGroup = function() {
+  $btnGroupBtns = $('.button-group-button');
+  var $curSelected = $('.button-group-button-selected');
+
+  var $forwardBtn = $('#go-forward');
+  var $backBtn = $('#go-back');
+
+  // Handlers for button clicks
+  var onHistStart = function() {
+    console.log('onHistStart');
+    $forwardBtn.removeClass('hidden');
+    $backBtn.removeClass('hidden');
+  };
+
+  var onHistEnd = function() {
+    console.log('onHistEnd');
+    $forwardBtn.addClass('hidden');
+    $backBtn.addClass('hidden');
+    rTable.updateFromLatestDoc();
+  };
+  // end button click handlers
+
+  // Map from button id to the function that handles that button getting
+  // clicked.
+  var startHandlers = {
+    'hist-btn': onHistStart
+  };
+
+  // Map from button id to the function that handles that button no longer being
+  // the active button.
+  var endHandlers = {
+    'hist-btn': onHistEnd
+  };
+
+  $('.button-group-button').on('click', function(evnt) {
+     var $clicked = $(evnt.currentTarget);
+     $curSelected.removeClass('button-group-button-selected');
+     $clicked.addClass('button-group-button-selected');
+     var endId = $curSelected.get(0).id;
+     if (endHandlers.hasOwnProperty(endId)) {
+       var fn = endHandlers[endId];
+       fn();
+     }
+     $curSelected = $clicked;
+     var startId = $curSelected.get(0).id;
+     if (startHandlers.hasOwnProperty(startId)) {
+       var fn = startHandlers[startId];
+       fn();
+     }
+  });
+};
 
 var RankingsTable = function() {
   var $table = $('#rankings');
@@ -51,9 +104,9 @@ var RankingsTable = function() {
   // The largest document in the database
   var lastDoc = db.MIN_DOC_ID;
   var firstDoc = db.MAX_DOC_ID;
+  var $histCheck = $('#hist-check');
   var $forwardBtn = $('#go-forward');
   var $backBtn = $('#go-back');
-  var $histCheck = $('#hist-check');
 
   var afterMatchRecorded = function() {
     $matchForm.addClass('hidden');
@@ -91,19 +144,6 @@ var RankingsTable = function() {
     $matchForm.removeClass('hidden');
   };
 
-
-  var onHistClick = function(evnt) {
-    if ($histCheck.prop('checked')) {
-      $forwardBtn.removeClass('hidden');
-      $backBtn.removeClass('hidden');
-    } else {
-      $forwardBtn.addClass('hidden');
-      $backBtn.addClass('hidden');
-      updateFromLatestDoc();
-    }
-  };
-
-  $histCheck.on('click', onHistClick);
 
   var onRowClick = function() {
     if ($histCheck.prop('checked')) {
@@ -286,7 +326,7 @@ var RankingsTable = function() {
 
   return {
     showRankings: buildTable,
-    updateRankings: updateFromLatestDoc
+    updateFromLatestDoc: updateFromLatestDoc
   };
 };
 
@@ -416,9 +456,9 @@ var connectionHandling = function() {
   startReplication();
 };
 
-var rTable;
 $(document).ready(function() {
   connectionHandling();
+  var btnGroup = new ButtonGroup();
   rTable = RankingsTable();
   setupAddUser(rTable);
 });

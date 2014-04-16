@@ -5,13 +5,12 @@
    </head>
    <body>
       <header>
-         <div id="hist-check-wrapper">
-            <div id="hist-cur">
-               <input type="checkbox" name="historical" id="hist-check">
-               <label for="hist-check"></label>
-            </div>
-            <h2>View history</h2>
-         </div>
+         <ul class="button-group">
+            <li><button class="button-group-button button-group-button-selected"
+               id="current-btn">Current</button></li>
+            <li><button class="button-group-button" id="hist-btn">History</button></li>
+            <li><button class="button-group-button" id="manage-btn">Management</button></li>
+         </ul>
          <div id="go-back" class="hidden">&lt;</div>
          <div id="event"></div>
          <div id="go-forward" class="hidden">&gt;</div>
