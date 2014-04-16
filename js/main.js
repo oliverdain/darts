@@ -57,20 +57,41 @@ var ButtonGroup = function() {
     console.log('onHistEnd');
     $forwardBtn.addClass('hidden');
     $backBtn.addClass('hidden');
+  };
+
+  var onManageStart = function() {
+    console.log('onManageStart');
+    $manage = $('#management');
+    $manage.removeClass('hidden');
+  };
+
+  var onManageEnd = function() {
+    console.log('onManageEnd');
+    $manage = $('#management');
+    $manage.addClass('hidden');
+
+  };
+
+  var onCurrentStart = function() {
+    console.log('onCurrentStart');
     rTable.updateFromLatestDoc();
+
   };
   // end button click handlers
 
   // Map from button id to the function that handles that button getting
   // clicked.
   var startHandlers = {
-    'hist-btn': onHistStart
+    'hist-btn': onHistStart,
+    'manage-btn': onManageStart,
+    'current-btn': onCurrentStart
   };
 
   // Map from button id to the function that handles that button no longer being
   // the active button.
   var endHandlers = {
-    'hist-btn': onHistEnd
+    'hist-btn': onHistEnd,
+    'manage-btn': onManageEnd
   };
 
   $('.button-group-button').on('click', function(evnt) {
@@ -330,44 +351,35 @@ var RankingsTable = function() {
   };
 };
 
-var setupAddUser = function(rankingsTable) {
-  var $form = $('<div/>', {class: 'hidden'});
-  var $name = $('<input/>', {type: 'text'});
-  var $submit = $('<input/>', {type: 'submit', value: 'Submit'});
-  var $cancel = $('<input/>', {type: 'button', value: 'Cancel'});
+var setupManage = function() {
+  var $addBtn = $('#add-player-btn');
+  var $newPlayerName = $('#new-player-name');
+  var $cancelBtn = $('#cancel-manage');
 
-  $form.append($name, '<br>', $submit, $cancel);
-  var $addBtn = $('#add-user-link');
-  $addBtn.after($form);
 
   $addBtn.on('click', function() {
-    $form.removeClass('hidden');
-  });
-
-  $cancel.on('click', function() {
-    $form.addClass('hidden');
-  });
-
-  $submit.on('click', function() {
     db.getLatestDoc(function(err, doc) {
       if (err) {
         console.error('Error getting latest doc:', err);
       } else {
         var newDoc = {_id: db.docIdForNow(),
-          'event': {type: 'New Player', player: $name.val()},
+          'event': {type: 'New Player', player: $newPlayerName.val()},
           ranking: doc.ranking
         };
-        newDoc.ranking.push($name.val());
+        newDoc.ranking.push($newPlayerName.val());
         db.put(newDoc, function(err) {
           if (err) {
             console.error('Error adding user!');
           } else {
-            $form.addClass('hidden');
-            rankingsTable.showRankings(newDoc.ranking);
+            $('#current-btn').get(0).click();
           }
         });
       }
     });
+  });
+
+  $cancelBtn.on('click', function() {
+    $('#current-btn').get(0).click();
   });
 };
 
@@ -460,5 +472,5 @@ $(document).ready(function() {
   connectionHandling();
   var btnGroup = new ButtonGroup();
   rTable = RankingsTable();
-  setupAddUser(rTable);
+  setupManage();
 });

@@ -18,13 +18,20 @@
       <table id="rankings">
       </table>
 
-      <img id="add-user-link" src="img/add_user.png">
+      {# This gets shown when the user clicks the management button. #}
+      <div id="management" class="hidden mode">
+         <label for="new-user-name">New User:</label>
+         <input type="text" id="new-player-name"></input>
+         <input type="submit" value="Submit" id="add-player-btn"></input>
+         <h2>- Or -</h2>
+         <input type="button" value="Cancel" id="cancel-manage">
+      </div>
 
       <input type="hidden" id="db-url" value="{{ dbUrl }}">
 
       {# This gets shown to record the outcome of a match. It's hidden
          until the user selects two rows in the rankings table. #}
-      <div id="match" class="hidden">
+      <div id="match" class="hidden mode">
          <h2>Select the winner:</h2>
          <input type="button" id="match-p1" class="match-button"><br>
          <input type="button" id="match-p2" class="match-button">
