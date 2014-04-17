@@ -456,7 +456,7 @@ var connectionHandling = function() {
     if (location.port) {
      dbUrl = dbUrl + ':' + location.port;
     }
-    dbUrl = dbUrl + '/darts';
+    dbUrl = dbUrl + '/db/darts';
     console.info('Will replicate to %s', dbUrl);
     db.replicate.to(dbUrl, {continuous: true});
     // for continuous replication, complete is called only when replication

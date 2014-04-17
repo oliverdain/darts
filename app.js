@@ -107,13 +107,15 @@ var main = function() {
   app.set('view engine', 'swig');
   app.set('views', __dirname + '/views');
 
-  // Proxy all requests to /darts to the local CouchDB instance.
+  // Proxy all requests to /db/darts to the local CouchDB instance. We also
+  // proxy /db as the sync process talks to the "root" CouchDB a bit in addition
+  // to the specific database.
   //
   // Have to do this before bodyparser or it messes things up.
   // This proxies anything to /darts directly to the couchdb darts database.
   var DATABASE_URL = 'http://localhost:5984';
   app.use(function(req, res, next) {
-    var proxyPath = req.originalUrl.match(/(^\/darts.*)$/);
+    var proxyPath = req.originalUrl.match(/^\/db(.*)$/);
     if(proxyPath){
       var dbUrl = DATABASE_URL + proxyPath[1];
       var requestOptions = {
@@ -158,10 +160,10 @@ var main = function() {
     if (req.session && req.session.user) {
       next();
     } else if (req.path == '/manifest') {
-      // Send a 404 if a user who isn't logged in request the manifest file. That
-      // way they remove everything from their cache and can't use the app any
-      // more (this also clears out older versions of the app that didn't use
-      // cookie auth).
+      // Send a 404 if a user who isn't logged in request the manifest file.
+      // That way they remove everything from their cache and can't use the app
+      // any more (this also clears out older versions of the app that didn't
+      // use cookie auth).
       console.log('User not logged in requested the manifest.');
       res.status(404).send('No manifest file until you log in');
     } else {
