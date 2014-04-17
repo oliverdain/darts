@@ -41,6 +41,7 @@ module.exports = function(db) {
                 'Correct ranking: %j, received ranking: %j', doc._id,
                 prevDoc._id, correctRanking, doc.ranking);
               doc.ranking = correctRanking.slice(0);
+              console.assert(doc._rev);
               changes.docs.push(doc);
               cb(null);
             }
@@ -77,6 +78,7 @@ module.exports = function(db) {
                           'Computed ranking: %j. Old ranking: %j',
                           newRanking, nextDoc.ranking);
                       nextDoc.ranking = newRanking.slice(0);
+                      console.assert(nextDoc._rev);
                       changes.docs.push(nextDoc);
                     }
                     curRanking = newRanking;
@@ -88,9 +90,7 @@ module.exports = function(db) {
 
         function(cb) {
           if (changes.docs.length > 0) {
-            console.log('Applying %d database changes', changes.docs.length);
-            // Allow overwriting existing docs
-            changes.new_edits = false;
+            console.log('Applying %d database changes.', changes.docs.length);
             db.bulkDocs(changes, function(err, response) {
               if (err) {
                 cb(err);

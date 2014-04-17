@@ -50,12 +50,13 @@ module.exports = function(db) {
       });
   };
 
-  // Return the document that comes before docid
+  // Return the document that comes before docid or null if there is no such
+  // doc.
   db.getPrevDoc = function(docid, cb) {
     getSecondDoc({descending: true, startkey: docid}, cb);
   };
 
-  // Return the document that comes after docid
+  // Return the document that comes after docid or null if there is no such doc.
   db.getNextDoc = function(docid, cb) {
     getSecondDoc({descending: false, startkey: docid}, cb);
   };
@@ -72,7 +73,7 @@ module.exports = function(db) {
           cb(err, null);
         } else {
           if (res.rows.length <= 1) {
-            console.error('getSecondDoc only got one result: ', res);
+            console.log('getSecondDoc only got one result: ', res);
             cb(null, null);
           } else {
             cb(null, res.rows[1].doc);

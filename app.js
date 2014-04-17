@@ -28,6 +28,47 @@ var ensureDBConsistent = function(ensureCb) {
   var seqNumber;
 
   async.series([
+      // Check for and fix inconsistent docs
+      function(cb) {
+        var curDoc = {_id: db.MIN_DOC_ID};
+
+        async.doWhilst(
+          // This is called repeatedly
+          function(whileCb) {
+            db.getNextDoc(curDoc._id, function(err, doc) {
+              curDoc = doc;
+              if (curDoc) {
+                var change = {doc: curDoc};
+                resolveChanges(change, whileCb);
+              } else {
+                // We're all done!
+                whileCb();
+              }
+            });
+          },
+
+          // Until this returns false
+          function() {
+            return curDoc !== null;
+          },
+
+          // Called when all docs have been resolved.
+          function(err) {
+            if (err) {
+              cb(err);
+            } else {
+              cb();
+            }
+          });
+
+      },
+
+      // Grab the current sequence number
+      //
+      // Note: there is a tiny race here as changes could happen to the DB
+      // between the fixed applied by the above function and this being called
+      // but since we haven't yet set up the DB proxy it would be pretty much
+      // impossible for that to happen.
       function(cb) {
         db.info(function(err, info) {
           if (err) {
@@ -40,21 +81,7 @@ var ensureDBConsistent = function(ensureCb) {
         });
       },
 
-      function(cb) {
-        db.allDocs({include_docs: true, startkey: db.MIN_DOC_ID},
-          function(err, res) {
-            if (err) {
-              cb(err);
-              return;
-            }
-
-            async.eachSeries(res.rows, function(row, callback) {
-              var change = {doc: row.doc};
-              resolveChanges(change, callback);
-            }, cb);
-          });
-      },
-
+      // Register to be notified of changes that happen after that seq number.
       function(cb) {
         console.log('Watching for any changes after seq#: %d', seqNumber);
         db.changes({
