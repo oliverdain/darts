@@ -15,7 +15,7 @@ var app = express();
 app.engine('swig', swig.renderFile);
 
 // Set up an initial database if necessary.
-var dbHost = process.env.DB || 'http://localhost:5984/darts';
+var dbHost = process.env.DB || 'http://localhost:5984/darts2';
 console.info('Connecting to database at: %s', dbHost);
 var db = new PouchDB(dbHost);
 db = require('./shared/db')(db);
@@ -107,12 +107,12 @@ var main = function() {
   app.set('view engine', 'swig');
   app.set('views', __dirname + '/views');
 
-  // Proxy all requests to /db/darts to the local CouchDB instance. We also
+  // Proxy all requests to /db/darts2 to the local CouchDB instance. We also
   // proxy /db as the sync process talks to the "root" CouchDB a bit in addition
   // to the specific database.
   //
   // Have to do this before bodyparser or it messes things up.
-  // This proxies anything to /darts directly to the couchdb darts database.
+  // This proxies anything to /darts2 directly to the couchdb darts2 database.
   var DATABASE_URL = 'http://localhost:5984';
   app.use(function(req, res, next) {
     var proxyPath = req.originalUrl.match(/^\/db(.*)$/);
