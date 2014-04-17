@@ -111,7 +111,6 @@ body {
    width: 80%;
    margin-left: auto;
    margin-right: auto;
-   font-size: 4em;
 }
    
 #rankings thead {
@@ -145,12 +144,10 @@ body {
    left: 0;
    right: 0;
    background-color: rgb(192, 192, 192);
-   font-size: xx-large;
 }
 
 .match-button {
    display: inline-block;
-   font-size: xx-large;
    width: 20em;
    padding-top: 0.5em;
    padding-bottom: 0.5em;
@@ -160,19 +157,28 @@ header {
    position: relative;
 }
 
+/* The history mode buttons for going forward and back
+   are wrapped in a div that constrains their size and
+   position. */
+#match-hist-buttons {
+   position: relative;
+}
+
 #go-back {
    position: absolute;
    left: 0;
    top: 0;
-   font-size: 5em;
+   font-size: 3em;
 }
 
 #go-forward {
    position: absolute;
    right: 0;
    top: 0;
-   font-size: 5em;
+   font-size: 3em;
 }
+
+/* end history mode btn styles */
 
 .btn-enabled {
    color: black;
@@ -185,8 +191,4 @@ header {
 
 .btn-disabled {
    color: #808080;
-}
-
-#event {
-   font-size: 3em;
 }

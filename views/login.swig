@@ -1,6 +1,7 @@
 <html>
 <head>
    <title>Log In</title>
+   <meta name="viewport" content="width=device-width">
 </head>
 <body>
    {% if flash %}

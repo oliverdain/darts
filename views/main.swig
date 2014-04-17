@@ -2,6 +2,7 @@
    <head>
       <script src="js/main.js"></script>
       <link rel="stylesheet" type="text/css" href="/css/main.css">
+      <meta name="viewport" content="width=device-width">
    </head>
    <body>
       <header>
@@ -11,9 +12,11 @@
             <li><button class="button-group-button" id="hist-btn">History</button></li>
             <li><button class="button-group-button" id="manage-btn">Management</button></li>
          </ul>
-         <div id="go-back" class="hidden">&lt;</div>
-         <div id="event"></div>
-         <div id="go-forward" class="hidden">&gt;</div>
+         <div id="match-hist-buttons">
+            <div id="go-back" class="hidden">&lt;</div>
+            <div id="event"></div>
+            <div id="go-forward" class="hidden">&gt;</div>
+         </div>
       </header>
       <table id="rankings">
       </table>
