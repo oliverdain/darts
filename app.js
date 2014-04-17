@@ -195,7 +195,7 @@ var main = function() {
     if (req.body.username == 'darts' && req.body.password == 'D4rts') {
       console.log('User logged in');
       req.session.user = 'darts';
-      res.redirect('/main');
+      res.redirect('/');
     } else {
       console.log('User tried to log in with %s:%s. Back to login',
         req.body.username, req.body.password);
@@ -217,7 +217,7 @@ var main = function() {
     });
   });
 
-  app.get('/main', function(req, res) {
+  app.get('/', function(req, res) {
     res.render('main', {dbUrl: dbHost});
   });
 

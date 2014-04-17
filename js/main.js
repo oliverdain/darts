@@ -1,11 +1,17 @@
 require('./third_party/jquery-1.9.1.min');
 var PouchDB = require('./third_party/pouchdb-2.1.0.min.js');
 var moment = require('./third_party/moment.min');
+var async = require('./third_party/async');
 var dartEvents = require('../shared/dart-events');
 
-// Database
-var db = new PouchDB('darts');
-var db = require('../shared/db')(db);
+// This is how we can deploy new versions of the app without requiring us to
+// replicate a ton of deleted docs for no reason: if the document "ver" in the
+// database "version" doesn't match the current app version, we first purge our
+// local DB.
+var VERSION = 10;
+
+// Database setup
+var db;
 var rTable;
 
 var insertWinner = function(p1, p2, winner) {
@@ -117,17 +123,17 @@ var RankingsTable = function() {
   var $head = $('<thead><tr><th>Rankings</th></tr></thead>');
   // The id of the doc whose results are currently displayed
   var currentDoc = null;
-  // If in history mode we can browse prior matches, but we can't record new
-  // matches. When not in history mode, the rankings table always shows the
-  // most recent rankings and updates when new matches are recorded.
-  var historyMode = false;
 
   // The largest document in the database
   var lastDoc = db.MIN_DOC_ID;
   var firstDoc = db.MAX_DOC_ID;
-  var $histCheck = $('#hist-check');
   var $forwardBtn = $('#go-forward');
   var $backBtn = $('#go-back');
+
+  var inHistoryMode = function() {
+    var $histBtn = $('#hist-btn');
+    return $histBtn.hasClass('button-group-button-selected');
+  }
 
   var afterMatchRecorded = function() {
     $matchForm.addClass('hidden');
@@ -167,7 +173,7 @@ var RankingsTable = function() {
 
 
   var onRowClick = function() {
-    if ($histCheck.prop('checked')) {
+    if (inHistoryMode()) {
       console.log('Row clicked in historical mode - ignoring');
       return;
     }
@@ -222,11 +228,15 @@ var RankingsTable = function() {
   };
 
   var displayDoc = function(doc) {
-    console.log('Updating table with %s', doc._id);
-    currentDoc = doc._id;
-    buildTable(doc.ranking);
-    displayEvent(doc);
-    updateNavBtns();
+    if (doc._id === db.MIN_DOC_ID) {
+      console.log('Document is initial DB document. Will not update the table');
+    } else {
+      console.log('Updating table with %s', doc._id);
+      currentDoc = doc._id;
+      buildTable(doc.ranking);
+      displayEvent(doc);
+      updateNavBtns();
+    }
   };
 
 
@@ -325,7 +335,7 @@ var RankingsTable = function() {
       updateNavBtns();
     }
 
-    if (!$histCheck.prop('checked') && doc._id > currentDoc) {
+    if (!inHistoryMode() && doc._id > currentDoc) {
       // If not in historical mode and we got a new doc, show it.
       updateFromLatestDoc();
     } else if (currentDoc && doc._id == currentDoc) {
@@ -468,9 +478,80 @@ var connectionHandling = function() {
   startReplication();
 };
 
+var setupDartsDb = function(cb) {
+  // This is to clean up old application cruft! It can be removed
+  // in the next version of things.
+  PouchDB.destroy('darts');
+  db = new PouchDB('darts2');
+  db = require('../shared/db')(db);
+  cb();
+};
+
+var setupDb = function(cb) {
+  var versionDB = new PouchDB('version');
+  var rev = null;
+  versionDB.get('ver', function(err, verDoc) {
+    var destroy = false;
+    if (err) {
+      console.log('Unable to find the version document. ' +
+        'Assuming a version change');
+      destroy = true;
+    } else {
+      if (verDoc.version !== VERSION) {
+        rev = verDoc._rev;
+        destroy = true;
+      }
+    }
+
+    if (destroy) {
+      // First create a new version document.
+      console.log('Updating the version document');
+      verDoc = {_id: 'ver', version: VERSION};
+      if (rev) {
+        verDoc._rev = rev;
+      }
+      versionDB.put(verDoc, function(err, info) {
+        if (err) {
+          console.log('Error writing the version document: %j', err);
+        } else {
+          console.log('Wrote the version document: %j', info);
+        }
+      });
+
+      console.log('DB version changed, deleting old database');
+      // Now destroy the DB.
+      PouchDB.destroy('darts2', function(err, info) {
+        if (err) {
+          console.log('Error destroying old database!: %j', err);
+          cb(err);
+        } else {
+          console.log('Destroyed old database: %j', info);
+          setupDartsDb(cb);
+        }
+      });
+    } else {
+        setupDartsDb(cb);
+    }
+  });
+};
+
 $(document).ready(function() {
-  connectionHandling();
-  var btnGroup = new ButtonGroup();
-  rTable = RankingsTable();
-  setupManage();
+  async.series([
+    setupDb,
+
+    function(cb) {
+      connectionHandling();
+      var btnGroup = new ButtonGroup();
+      rTable = RankingsTable();
+      setupManage();
+      cb();
+    }],
+
+    function(err) {
+      if (err) {
+        console.log('Setup error!! %j', err);
+      } else {
+        console.log('Setup complete');
+      }
+    });
 });

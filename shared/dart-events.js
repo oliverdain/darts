@@ -34,7 +34,7 @@ exports.applyMatch = function(ranking, evnt) {
 // "Match" or "New Player", this applies the event to the ranking and returns
 // teh new ranking.
 exports.applyEvent = function(ranking, evnt) {
-  if (evnt.type === 'New Player') {
+  if (evnt && evnt.type === 'New Player') {
     // Make a copy
     var res = ranking.slice(0);
     console.assert(evnt.player);
