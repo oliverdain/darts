@@ -17,7 +17,7 @@ var rTable;
 var insertWinner = function(p1, p2, winner) {
   db.getLatestDoc(function(err, curDoc) {
     if (err) {
-      console.error('Uable to get latest document. Match not recorded');
+      console.error('Unable to get latest document. Match not recorded');
       return;
     }
 
